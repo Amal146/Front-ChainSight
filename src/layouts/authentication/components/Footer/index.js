@@ -49,7 +49,7 @@ function Footer() {
             sx={{ textAlign: "center", fontWeight: "400 !important" }}
             color="text"
           >
-            @ 2024, Made with ❤️
+            @ 2025, Liechtenstien. All Rights Reserved. 
             <VuiTypography
               component="a"
               variant="button"
