@@ -20,6 +20,7 @@
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import { Card, LinearProgress, Stack } from "@mui/material";
+import Transactions from '../../components/Transactions/Transactions';
 
 // Vision UI Dashboard React components
 import VuiBox from "components/VuiBox";
@@ -284,6 +285,9 @@ function Dashboard() {
             <OrderOverview />
           </Grid>
         </Grid>
+      </VuiBox>
+      <VuiBox sx={{ padding: 3 }}>
+        <Transactions />
       </VuiBox>
       <Footer />
     </DashboardLayout>
