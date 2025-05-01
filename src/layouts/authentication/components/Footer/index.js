@@ -49,7 +49,7 @@ function Footer() {
             sx={{ textAlign: "center", fontWeight: "400 !important" }}
             color="text"
           >
-            @ 2025, Liechtenstien. All Rights Reserved. 
+            @ 2025, Liechtenstein. All Rights Reserved.
             <VuiTypography
               component="a"
               variant="button"
@@ -57,10 +57,7 @@ function Footer() {
               sx={{ textAlign: "center", fontWeight: "500 !important" }}
               color="text"
               mr="2px"
-            >
-          
-            </VuiTypography>
-          
+            ></VuiTypography>
             <VuiTypography
               ml="2px"
               mr="2px"
@@ -69,11 +66,10 @@ function Footer() {
               href="#"
               sx={{ textAlign: "center", fontWeight: "500 !important" }}
               color="text"
-            >
-              
-            </VuiTypography>
-           
+            ></VuiTypography>
           </VuiTypography>
+          
+      
         </Grid>
         {/* <Grid item xs={10}>
           <VuiBox display="flex" justifyContent="center" flexWrap="wrap" mb={3}>
