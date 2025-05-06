@@ -19,7 +19,7 @@ const Transactions = () => {
     const fetchTransactions = async () => {
       try {
         const response = await fetch(
-          `https://api.etherscan.io/api?module=account&action=txlist&address=${process.env.REACT_APP_TEST_WALLET}&startblock=0&endblock=99999999&sort=desc&apikey=${process.env.REACT_APP_TEST_API_KEY}`
+          `https://api.etherscan.io/api?module=account&action=txlist&address=0x7e2a2FA2a064F693f0a55C5639476d913Ff12D05&startblock=0&endblock=99999999&sort=desc&apikey=V8RHS7P2YNSAHUY92CXVANVQK8MIYK95UQ`
         );
         const data = await response.json();
         if (data.status === "1") {
