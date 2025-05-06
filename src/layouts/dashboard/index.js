@@ -72,6 +72,9 @@ function Dashboard() {
     <DashboardLayout>
       <DashboardNavbar />
       <VuiBox sx={{ padding: 3 }}>
+        <WelcomeMark />
+      </VuiBox>
+      <VuiBox sx={{ padding: 3 }}>
         <GasMetricsDashboard />
       </VuiBox>
       <VuiBox sx={{ padding: 3 }}>

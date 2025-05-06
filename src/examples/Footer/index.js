@@ -37,7 +37,7 @@ function Footer() {
           sx={{ textAlign: "center", fontWeight: "400 !important" }}
           color="white"
         >
-          @ 2021, Made with ❤️&nbsp;&nbsp;&nbsp; by{" "}
+          @ 2025, Made with ❤️&nbsp;&nbsp;&nbsp; {" "}
           <VuiTypography
             component="a"
             variant="button"
@@ -46,9 +46,9 @@ function Footer() {
             color="white"
             mr="2px"
           >
-            Simmmple
+            
           </VuiTypography>
-          &
+          
           <VuiTypography
             ml="2px"
             mr="2px"
@@ -58,9 +58,9 @@ function Footer() {
             sx={{ textAlign: "center", fontWeight: "500 !important" }}
             color="white"
           >
-            Creative Tim
+            
           </VuiTypography>
-          for a better web
+          
         </VuiTypography>
       </VuiBox>
       <VuiBox item xs={10}>
@@ -72,7 +72,7 @@ function Footer() {
               variant="body2"
               color="white"
             >
-              Marketplace
+              
             </VuiTypography>
           </VuiBox>
           <VuiBox mr={{ xs: "20px", lg: "46px" }}>
@@ -82,7 +82,7 @@ function Footer() {
               variant="body2"
               color="white"
             >
-              Blog
+              
             </VuiTypography>
           </VuiBox>
           <VuiBox>
@@ -92,7 +92,7 @@ function Footer() {
               variant="body2"
               color="white"
             >
-              License
+              
             </VuiTypography>
           </VuiBox>
         </VuiBox>

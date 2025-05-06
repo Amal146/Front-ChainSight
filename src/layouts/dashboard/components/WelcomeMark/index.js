@@ -18,13 +18,13 @@ const WelcomeMark = () => {
       <VuiBox height="100%" display="flex" flexDirection="column" justifyContent="space-between">
         <VuiBox>
           <VuiTypography color="text" variant="button" fontWeight="regular" mb="12px">
-            Welcome back,
+            Welcome,
           </VuiTypography>
           <VuiTypography color="white" variant="h3" fontWeight="bold" mb="18px">
-            Mark Johnson
+            Dear User
           </VuiTypography>
           <VuiTypography color="text" variant="h6" fontWeight="regular" mb="auto">
-            Glad to see you again!
+            Glad to see you !
             <br /> Ask me anything.
           </VuiTypography>
         </VuiBox>
