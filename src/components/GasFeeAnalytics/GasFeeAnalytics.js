@@ -233,6 +233,51 @@ const GasFeeAnalytics = () => {
 
   return (
     <Box sx={{ color: "#ffffff", p: 2 }}>
+      <Grid container spacing={4} mb={3}>
+              <Grid item xs={6} sm={3}>
+                <MetricCard
+                  icon={<IoWalletOutline size={20} />}
+                  title="Total Gas"
+                  value={`${gasMetrics.totalGasSpent.toFixed(6)} ETH`}
+                  secondaryValue={`$${gasMetrics.totalGasSpentUSD.toFixed(2)}`}
+                  progress={Math.min(100, gasMetrics.totalGasSpent * 100)}
+                  disabled={recentTransactions.length === 0}
+                />
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <MetricCard
+                  icon={<IoRocketOutline size={20} />}
+                  title="Avg Price"
+                  value={`${
+                    gasMetrics.gasPriceTrends.length > 0 ? 
+                    (gasMetrics.gasPriceTrends.reduce((sum, day) => sum + day.avgPrice, 0) / 
+                     gasMetrics.gasPriceTrends.length).toFixed(2) : '0.00'
+                  } Gwei`}
+                  progress={Math.min(100, 
+                    gasMetrics.gasPriceTrends.length > 0 ?
+                    (gasMetrics.gasPriceTrends.reduce((sum, day) => sum + day.avgPrice, 0) / 
+                     (gasMetrics.gasPriceTrends.length * gasMetrics.networkAverageGasPrice)) * 100 : 0
+                  )}
+                  disabled={recentTransactions.length === 0}
+                />
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <MetricCard
+                  icon={<IoConstructOutline size={20} />}
+                  title="Transactions"
+                  value={recentTransactions.length.toLocaleString()}
+                  progress={Math.min(100, recentTransactions.length / 100)}
+                />
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <MetricCard
+                  icon={<IoCartOutline size={20} />}
+                  title="Network Avg"
+                  value={`${gasMetrics.networkAverageGasPrice.toFixed(2)} Gwei`}
+                  progress={100}
+                />
+              </Grid>
+            </Grid>
       <Box mb={3} display="flex" alignItems="center">
         <Typography variant="h6" mr={2}>
           Timeframe:
@@ -261,7 +306,7 @@ const GasFeeAnalytics = () => {
         <Grid item xs={12} lg={7}>
           <Card sx={{ 
             p: 3, 
-            bgcolor: "rgba(16, 18, 37, 0.7)",
+            bgcolor: "rgba(16, 18, 37, 0.58)",
             borderRadius: "12px",
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)"
           }}>
@@ -343,7 +388,7 @@ const GasFeeAnalytics = () => {
         <Grid item xs={12} lg={5}>
           <Card sx={{ 
             p: 3, 
-            bgcolor: "rgba(16, 18, 37, 0.7)",
+            bgcolor: "rgba(16, 18, 37, 0.42)",
             borderRadius: "12px",
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
             height: "100%"
@@ -392,51 +437,7 @@ const GasFeeAnalytics = () => {
               )}
             </Box>
 
-            <Grid container spacing={2}>
-              <Grid item xs={6} sm={3}>
-                <MetricCard
-                  icon={<IoWalletOutline size={20} />}
-                  title="Total Gas"
-                  value={`${gasMetrics.totalGasSpent.toFixed(6)} ETH`}
-                  secondaryValue={`$${gasMetrics.totalGasSpentUSD.toFixed(2)}`}
-                  progress={Math.min(100, gasMetrics.totalGasSpent * 100)}
-                  disabled={recentTransactions.length === 0}
-                />
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <MetricCard
-                  icon={<IoRocketOutline size={20} />}
-                  title="Avg Price"
-                  value={`${
-                    gasMetrics.gasPriceTrends.length > 0 ? 
-                    (gasMetrics.gasPriceTrends.reduce((sum, day) => sum + day.avgPrice, 0) / 
-                     gasMetrics.gasPriceTrends.length).toFixed(2) : '0.00'
-                  } Gwei`}
-                  progress={Math.min(100, 
-                    gasMetrics.gasPriceTrends.length > 0 ?
-                    (gasMetrics.gasPriceTrends.reduce((sum, day) => sum + day.avgPrice, 0) / 
-                     (gasMetrics.gasPriceTrends.length * gasMetrics.networkAverageGasPrice)) * 100 : 0
-                  )}
-                  disabled={recentTransactions.length === 0}
-                />
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <MetricCard
-                  icon={<IoConstructOutline size={20} />}
-                  title="Transactions"
-                  value={recentTransactions.length.toLocaleString()}
-                  progress={Math.min(100, recentTransactions.length / 100)}
-                />
-              </Grid>
-              <Grid item xs={6} sm={3}>
-                <MetricCard
-                  icon={<IoCartOutline size={20} />}
-                  title="Network Avg"
-                  value={`${gasMetrics.networkAverageGasPrice.toFixed(2)} Gwei`}
-                  progress={100}
-                />
-              </Grid>
-            </Grid>
+            
           </Card>
         </Grid>
       </Grid>
