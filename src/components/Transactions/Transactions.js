@@ -1,21 +1,17 @@
 import React, { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Typography,
-  CircularProgress,
-  Pagination,
-} from "@mui/material";
+
+// Vision UI Dashboard React components
+import VuiBox from "components/VuiBox";
+import VuiTypography from "components/VuiTypography";
+import VuiBadge from "components/VuiBadge";
+
+// Vision UI Dashboard React examples
+import Table from "examples/Tables/Table";
 
 const Transactions = () => {
-  const [transactions, setTransactions] = useState([]); // Initialize as [] instead of undefined
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // New error state
+  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const rowsPerPage = 10;
 
@@ -27,7 +23,7 @@ const Transactions = () => {
         );
         const data = await response.json();
         if (data.status === "1") {
-          setTransactions(data.result || []); // Ensure data.result is never undefined
+          setTransactions(data.result || []);
         } else {
           throw new Error(data.message || "Failed to fetch transactions");
         }
@@ -41,75 +37,83 @@ const Transactions = () => {
     fetchTransactions();
   }, []);
 
-  // Pagination logic (now safe since transactions is always an array)
   const paginatedTransactions = transactions.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
+  const formatAddress = (address) => {
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
+
+  const getStatusBadge = (tx) => {
+    const status = tx.isError === "0" ? "success" : "error";
+    const statusText = tx.isError === "0" ? "Success" : "Failed";
+    
+    return (
+      <VuiBadge 
+        variant="contained" 
+        color={status}
+        badgeContent={statusText}
+        container
+      />
+    );
+  };
+
   return (
-    <TableContainer component={Paper} sx={{ marginTop: 4 }}>
-      <Typography variant="h6" sx={{ padding: 2 }}>
+    <VuiBox>
+      <VuiTypography variant="h6" color="white" fontWeight="medium" mb="12px">
         Recent Transactions
-      </Typography>
-
+      </VuiTypography>
+      
       {loading ? (
-        <CircularProgress sx={{ display: "block", margin: "20px auto" }} />
+        <VuiBox display="flex" justifyContent="center">
+          <VuiTypography variant="body2" color="text">
+            Loading...
+          </VuiTypography>
+        </VuiBox>
       ) : error ? (
-        <Typography color="error" sx={{ padding: 2 }}>
+        <VuiTypography variant="body2" color="error">
           Error: {error}
-        </Typography>
-      ) : transactions.length === 0 ? (
-        <Typography sx={{ padding: 2 }}>No transactions found.</Typography>
+        </VuiTypography>
       ) : (
-        <>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <strong>Tx Hash</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>From</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>To</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Value (ETH)</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Timestamp</strong>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {paginatedTransactions.map((tx) => (
-                <TableRow key={tx.hash}>
-                  <TableCell sx={{ fontFamily: "monospace" }}>
-                    {tx.hash.substring(0, 12)}...
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: "monospace" }}>
-                    {tx.from.substring(0, 10)}...
-                  </TableCell>
-                  <TableCell sx={{ fontFamily: "monospace" }}>
-                    {tx.to.substring(0, 10)}...
-                  </TableCell>
-                  <TableCell>{(parseInt(tx.value) / 1e18).toFixed(4)}</TableCell>
-                  <TableCell>{new Date(tx.timeStamp * 1000).toLocaleString()}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          {transactions.length > rowsPerPage && (
-            <Pagination
-              count={Math.ceil(transactions.length / rowsPerPage)}
-              page={page}
-              onChange={(_, newPage) => setPage(newPage)}
-              sx={{ padding: 2, display: "flex", justifyContent: "center" }}
-            />
-          )}
-        </>
+        <Table
+          columns={[
+            { name: "hash", align: "left" },
+            { name: "from", align: "left" },
+            { name: "to", align: "left" },
+            { name: "value", align: "center" },
+            { name: "status", align: "center" },
+            { name: "timestamp", align: "center" },
+          ]}
+          rows={paginatedTransactions.map((tx) => ({
+            hash: (
+              <VuiTypography variant="caption" color="white" fontWeight="medium">
+                {formatAddress(tx.hash)}
+              </VuiTypography>
+            ),
+            from: (
+              <VuiTypography variant="caption" color="white" fontWeight="medium">
+                {formatAddress(tx.from)}
+              </VuiTypography>
+            ),
+            to: (
+              <VuiTypography variant="caption" color="white" fontWeight="medium">
+                {formatAddress(tx.to)}
+              </VuiTypography>
+            ),
+            value: (
+              <VuiTypography variant="caption" color="white" fontWeight="medium">
+                {(parseInt(tx.value) / 1e18).toFixed(6)} ETH
+              </VuiTypography>
+            ),
+            status: getStatusBadge(tx),
+            timestamp: (
+              <VuiTypography variant="caption" color="white" fontWeight="medium">
+                {new Date(tx.timeStamp * 1000).toLocaleDateString()}
+              </VuiTypography>
+            ),
+          }))}
+        />
       )}
-    </TableContainer>
+    </VuiBox>
   );
 };
 

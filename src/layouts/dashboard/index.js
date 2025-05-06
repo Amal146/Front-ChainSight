@@ -60,6 +60,7 @@ import { lineChartDataDashboard } from "layouts/dashboard/data/lineChartData";
 import { lineChartOptionsDashboard } from "layouts/dashboard/data/lineChartOptions";
 import { barChartDataDashboard } from "layouts/dashboard/data/barChartData";
 import { barChartOptionsDashboard } from "layouts/dashboard/data/barChartOptions";
+import GasFeeAnalytics from "components/GasFeeAnalytics/GasFeeAnalytics";
 
 function Dashboard() {
   const { gradients } = colors;
@@ -124,13 +125,13 @@ function Dashboard() {
               <Card>
                 <VuiBox sx={{ height: "100%" }}>
                   <VuiTypography variant="lg" color="white" fontWeight="bold" mb="5px">
-                    Sales Overview
+                    Gas Fee Analytics
                   </VuiTypography>
                   <VuiBox display="flex" alignItems="center" mb="40px">
                     <VuiTypography variant="button" color="success" fontWeight="bold">
                       +5% more{" "}
                       <VuiTypography variant="button" color="text" fontWeight="regular">
-                        in 2021
+                        in 2025
                       </VuiTypography>
                     </VuiTypography>
                   </VuiBox>
@@ -288,6 +289,9 @@ function Dashboard() {
       </VuiBox>
       <VuiBox sx={{ padding: 3 }}>
         <Transactions />
+      </VuiBox>
+      <VuiBox sx={{ padding: 3 }}>
+        <GasFeeAnalytics />
       </VuiBox>
       <Footer />
     </DashboardLayout>
