@@ -20,7 +20,7 @@
 import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import { Card, LinearProgress, Stack } from "@mui/material";
-import Transactions from '../../components/Transactions/Transactions';
+import Transactions from "../../components/Transactions/Transactions";
 
 // Vision UI Dashboard React components
 import VuiBox from "components/VuiBox";
@@ -61,6 +61,8 @@ import { lineChartOptionsDashboard } from "layouts/dashboard/data/lineChartOptio
 import { barChartDataDashboard } from "layouts/dashboard/data/barChartData";
 import { barChartOptionsDashboard } from "layouts/dashboard/data/barChartOptions";
 import GasFeeAnalytics from "components/GasFeeAnalytics/GasFeeAnalytics";
+import GasMetrics from "./components/GasMetrics/GasMetrics";
+import GasMetricsDashboard from "./components/GasMetrics/GasMetrics";
 
 function Dashboard() {
   const { gradients } = colors;
@@ -69,14 +71,16 @@ function Dashboard() {
   return (
     <DashboardLayout>
       <DashboardNavbar />
-      
+      <VuiBox sx={{ padding: 3 }}>
+        <GasMetricsDashboard />
+      </VuiBox>
       <VuiBox sx={{ padding: 3 }}>
         <GasFeeAnalytics />
       </VuiBox>
       <VuiBox sx={{ padding: 3 }}>
         <Transactions />
       </VuiBox>
-      {/* <VuiBox py={3}>
+      <VuiBox py={3}>
         <VuiBox mb={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6} xl={3}>
@@ -293,7 +297,7 @@ function Dashboard() {
             <OrderOverview />
           </Grid>
         </Grid>
-      </VuiBox> */}
+      </VuiBox>
       <Footer />
     </DashboardLayout>
   );

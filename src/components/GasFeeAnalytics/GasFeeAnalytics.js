@@ -279,7 +279,7 @@ const GasFeeAnalytics = () => {
               </Grid>
             </Grid>
       <Box mb={3} display="flex" alignItems="center">
-        <Typography variant="h6" mr={2}>
+        <Typography variant="h6" mr={2} fontWeight="bold" color="rgba(255,255,255,0.7)" fontSize={20}>
           Timeframe:
         </Typography>
         <select 
@@ -290,7 +290,7 @@ const GasFeeAnalytics = () => {
             color: "white",
             padding: "8px",
             borderRadius: "4px",
-            border: "1px solid rgba(255,255,255,0.2)"
+            border: "1px solid rgba(255, 255, 255, 0.2)"
           }}
         >
           <option value={7}>Last 7 days</option>
@@ -310,7 +310,7 @@ const GasFeeAnalytics = () => {
             borderRadius: "12px",
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)"
           }}>
-            <Typography variant="h5" fontWeight="bold" mb={2}>
+            <Typography variant="h5" fontWeight="bold" mb={2} color="rgba(142, 153, 188, 0.78)" fontSize={48}>
               Gas Price Trends ({timeframe === 0 ? 'All Time' : `Last ${timeframe} Days`})
             </Typography>
             
@@ -393,7 +393,7 @@ const GasFeeAnalytics = () => {
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
             height: "100%"
           }}>
-            <Typography variant="h5" fontWeight="bold" mb={2}>
+            <Typography variant="h5" fontWeight="bold" mb={2} color="rgba(142, 153, 188, 0.78)" fontSize={40} >
               Gas Consumption Summary
             </Typography>
             <Typography variant="body2" color="rgba(255,255,255,0.7)" mb={3}>

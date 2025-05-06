@@ -7,6 +7,7 @@ import VuiBadge from "components/VuiBadge";
 
 // Vision UI Dashboard React examples
 import Table from "examples/Tables/Table";
+import { Margin } from "@mui/icons-material";
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -46,23 +47,23 @@ const Transactions = () => {
   const getStatusBadge = (tx) => {
     const status = tx.isError === "0" ? "success" : "error";
     const statusText = tx.isError === "0" ? "Success" : "Failed";
-    
-    return (
-      <VuiBadge 
-        variant="contained" 
-        color={status}
-        badgeContent={statusText}
-        container
-      />
-    );
+
+    return <VuiBadge variant="contained" color={status} badgeContent={statusText} container />;
   };
 
   return (
-    <VuiBox>
-      <VuiTypography variant="h6" color="white" fontWeight="medium" mb="12px">
+    <VuiBox
+      bgColor="rgba(16, 18, 37, 0.81)"
+      boxShadow = "0 4px 20px rgba(0, 0, 0, 0.3)"
+      sx={{ borderRadius: "12px" }}
+      p={3}
+      mb={3}
+      mt={3}    
+    >
+      <VuiTypography variant="h1" fontWeight="bold" color="white" mb={3}>
         Recent Transactions
       </VuiTypography>
-      
+
       {loading ? (
         <VuiBox display="flex" justifyContent="center">
           <VuiTypography variant="body2" color="text">
