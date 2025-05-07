@@ -83,7 +83,7 @@ function Dashboard() {
       <VuiBox sx={{ padding: 3 }}>
         <Transactions />
       </VuiBox>
-      <VuiBox py={3}>
+      {/* <VuiBox py={3}>
         <VuiBox mb={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6} xl={3}>
@@ -300,7 +300,7 @@ function Dashboard() {
             <OrderOverview />
           </Grid>
         </Grid>
-      </VuiBox>
+      </VuiBox> */}
       <Footer />
     </DashboardLayout>
   );

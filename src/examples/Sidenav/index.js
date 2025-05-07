@@ -42,6 +42,7 @@ import SidenavCard from "examples/Sidenav/SidenavCard";
 // Custom styles for the Sidenav
 import SidenavRoot from "examples/Sidenav/SidenavRoot";
 import sidenavLogoLabel from "examples/Sidenav/styles/sidenav";
+import logo from "../../assets/images/logo.png";
 
 // Vision UI Dashboard React context
 import { useVisionUIController, setMiniSidenav, setTransparentSidenav } from "context";
@@ -184,7 +185,7 @@ function Sidenav({ color, brandName, routes, ...rest }) {
                 })
               }
             >
-              <SimmmpleLogo size="24px" />
+              <img src={logo} alt="Logo" style={{ width: 30, height: 30 }} />
             </VuiBox>
             <VuiTypography
               variant="button"
@@ -202,7 +203,7 @@ function Sidenav({ color, brandName, routes, ...rest }) {
                 })
               }
             >
-              {brandName}
+              ChainSigntAI
             </VuiTypography>
           </VuiBox>
         </VuiBox>
