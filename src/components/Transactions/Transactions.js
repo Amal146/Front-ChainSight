@@ -7,13 +7,21 @@ import VuiBadge from "components/VuiBadge";
 
 // Vision UI Dashboard React examples
 import Table from "examples/Tables/Table";
-import { Margin } from "@mui/icons-material";
+
+// Material UI components
+import Modal from "@mui/material/Modal";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedTx, setSelectedTx] = useState(null);
+  const [explanation, setExplanation] = useState(null);
+  const [explaining, setExplaining] = useState(false);
   const rowsPerPage = 10;
 
   useEffect(() => {
@@ -51,14 +59,36 @@ const Transactions = () => {
     return <VuiBadge variant="contained" color={status} badgeContent={statusText} container />;
   };
 
+  const handleExplainClick = async (tx) => {
+    setSelectedTx(tx);
+    setOpenModal(true);
+    setExplaining(true);
+    setExplanation(null);
+
+    try {
+      const response = await fetch("https://chainsightbot.onrender.com/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ txHash: tx.hash }),
+      });
+
+      const data = await response.json();
+      setExplanation(data);
+    } catch (err) {
+      setExplanation({ summary: "Error fetching explanation." });
+    } finally {
+      setExplaining(false);
+    }
+  };
+
   return (
     <VuiBox
       bgColor="rgba(16, 18, 37, 0.81)"
-      boxShadow = "0 4px 20px rgba(0, 0, 0, 0.3)"
+      boxShadow="0 4px 20px rgba(0, 0, 0, 0.3)"
       sx={{ borderRadius: "12px" }}
       p={3}
       mb={3}
-      mt={3}    
+      mt={3}
     >
       <VuiTypography variant="h1" fontWeight="bold" color="white" mb={3}>
         Recent Transactions
@@ -83,6 +113,7 @@ const Transactions = () => {
             { name: "value", align: "center" },
             { name: "status", align: "center" },
             { name: "timestamp", align: "center" },
+            { name: "explain", align: "center" },
           ]}
           rows={paginatedTransactions.map((tx) => ({
             hash: (
@@ -111,9 +142,58 @@ const Transactions = () => {
                 {new Date(tx.timeStamp * 1000).toLocaleDateString()}
               </VuiTypography>
             ),
+            explain: (
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => handleExplainClick(tx)}
+                style={{ color: "#61dafb", borderColor: "#61dafb" }}
+              >
+                Explain
+              </Button>
+            ),
           }))}
         />
       )}
+
+      <Modal open={openModal} onClose={() => setOpenModal(false)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 500,
+            bgcolor: "#1e1e2f",
+            color: "white",
+            boxShadow: 24,
+            p: 4,
+            borderRadius: 2,
+          }}
+        >
+          <h3>🧠 Transaction Explanation</h3>
+          {explaining ? (
+            <p>Analyzing transaction...</p>
+          ) : explanation ? (
+            <div>
+              <p>
+                <strong>Summary:</strong> {explanation.summary}
+              </p>
+              <p>
+                <strong>Capital Gain:</strong> ${explanation.gain}
+              </p>
+              <p>
+                <strong>Tax Info:</strong> {explanation.taxInfo}
+              </p>
+              <p>
+                <em>{explanation.commentary}</em>
+              </p>
+            </div>
+          ) : (
+            <p>Error loading explanation.</p>
+          )}
+        </Box>
+      </Modal>
     </VuiBox>
   );
 };
