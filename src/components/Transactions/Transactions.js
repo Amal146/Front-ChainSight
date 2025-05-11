@@ -4,14 +4,15 @@ import React, { useState, useEffect } from "react";
 import VuiBox from "components/VuiBox";
 import VuiTypography from "components/VuiTypography";
 import VuiBadge from "components/VuiBadge";
-
+import {
+  Modal,
+  Button,
+  Box,
+  Divider,
+  CircularProgress
+} from "@mui/material";
 // Vision UI Dashboard React examples
 import Table from "examples/Tables/Table";
-
-// Material UI components
-import Modal from "@mui/material/Modal";
-import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -163,35 +164,83 @@ const Transactions = () => {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: 500,
-            bgcolor: "#1e1e2f",
-            color: "white",
+            width: "80vw",
+            maxWidth: "1200px",
+            height: "80vh",
+            bgcolor: "#1a1a2e",
+            color: "#e0e0e0",
             boxShadow: 24,
             p: 4,
             borderRadius: 2,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
           }}
         >
-          <h3>🧠 Transaction Explanation</h3>
-          {explaining ? (
-            <p>Analyzing transaction...</p>
-          ) : explanation ? (
-            <div>
-              <p>
-                <strong>Summary:</strong> {explanation.summary}
-              </p>
-              <p>
-                <strong>Capital Gain:</strong> ${explanation.gain}
-              </p>
-              <p>
-                <strong>Tax Info:</strong> {explanation.taxInfo}
-              </p>
-              <p>
-                <em>{explanation.commentary}</em>
-              </p>
-            </div>
-          ) : (
-            <p>Error loading explanation.</p>
-          )}
+          <Box
+            sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}
+          >
+            <VuiTypography variant="h5" sx={{ color: "#4fc3f7", fontWeight: "bold" }}>
+              🧠 Transaction Explanation
+            </VuiTypography>
+          </Box>
+
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: "auto",
+              pr: 2,
+              "&::-webkit-scrollbar": {
+                width: "6px",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#4fc3f7",
+                borderRadius: "3px",
+              },
+            }}
+          >
+            {explaining ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                }}
+              >
+                <CircularProgress sx={{ color: "#4fc3f7" }} />
+              </Box>
+            ) : explanation ? (
+              <Box
+                sx={{
+                  backgroundColor: "#252545",
+                  padding: 3,
+                  borderRadius: 2,
+                  "& p": { marginBottom: 2 },
+                  "& strong": { color: "#4fc3f7" },
+                  "& em": { color: "#a5d6a7", fontStyle: "italic" },
+                  "& ul": { paddingLeft: 3, marginBottom: 2 },
+                  "& li": { marginBottom: 1 },
+                }}
+              >
+                <VuiTypography variant="h6" sx={{ color: "#4fc3f7", mb: 2 }}>
+                  {explanation.interpretation.summary}
+                </VuiTypography>
+                <Divider sx={{ bgcolor: "#4fc3f7", mb: 3 }} />
+                <VuiTypography variant="body1" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+                  {explanation.interpretation.interpretation.split("\n\n").map((paragraph, i) => (
+                    <React.Fragment key={i}>
+                      {paragraph}
+                      <br />
+                      <br />
+                    </React.Fragment>
+                  ))}
+                </VuiTypography>
+              </Box>
+            ) : (
+              <VuiTypography sx={{ color: "#ef9a9a" }}>Error loading explanation.</VuiTypography>
+            )}
+          </Box>
         </Box>
       </Modal>
     </VuiBox>
