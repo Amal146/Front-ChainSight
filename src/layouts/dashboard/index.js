@@ -109,7 +109,7 @@ function Dashboard() {
       <VuiBox sx={{ padding: 3 }}>
         <Transactions />
       </VuiBox>
-      <div style={{ maxWidth: 800, margin: "auto", padding: "20px" }}>
+      {/* <div style={{ maxWidth: 800, margin: "auto", padding: "20px" }}>
         <h2>🔍 Ethereum Fraud Detection</h2>
         <input
           type="text"
@@ -119,7 +119,7 @@ function Dashboard() {
           style={{ width: "100%", padding: "10px", marginBottom: "20px" }}
         />
         <TransactionReport walletAddress={wallet} />
-      </div>
+      </div> */}
       {/* <VuiBox py={3}>
         <VuiBox mb={3}>
           <Grid container spacing={3}>
