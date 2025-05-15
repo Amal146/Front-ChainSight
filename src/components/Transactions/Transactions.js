@@ -7,6 +7,7 @@ import VuiBadge from "components/VuiBadge";
 import { Modal, Button, Box, Divider, CircularProgress } from "@mui/material";
 // Vision UI Dashboard React examples
 import Table from "examples/Tables/Table";
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -85,7 +86,7 @@ const Transactions = () => {
       mb={3}
       mt={3}
     >
-      <VuiTypography variant="h1" fontWeight="bold" color="white" mb={3} fontSize="x-large">
+      <VuiTypography variant="h3" fontWeight="bold" color="white" mb={3} fontSize="x-large">
         Recent Transactions
       </VuiTypography>
 
@@ -185,11 +186,14 @@ const Transactions = () => {
               overflowY: "auto",
               pr: 2,
               "&::-webkit-scrollbar": {
-                width: "6px",
+                width: "8px",
               },
               "&::-webkit-scrollbar-thumb": {
-                backgroundColor: "#4fc3f7",
-                borderRadius: "3px",
+                backgroundColor: "#3f51b5",
+                borderRadius: "4px",
+              },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor: "#1a1a2e",
               },
             }}
           >
@@ -200,39 +204,177 @@ const Transactions = () => {
                   justifyContent: "center",
                   alignItems: "center",
                   height: "100%",
+                  minHeight: "200px",
                 }}
               >
-                <CircularProgress sx={{ color: "#4fc3f7" }} />
+                <CircularProgress
+                  sx={{
+                    color: "#4fc3f7",
+                    width: "60px !important",
+                    height: "60px !important",
+                  }}
+                />
               </Box>
             ) : explanation && explanation.interpretation ? (
               <Box
                 sx={{
-                  backgroundColor: "#252545",
+                  backgroundColor: "#1a1a2e",
                   padding: 3,
-                  borderRadius: 2,
-                  "& p": { marginBottom: 2 },
-                  "& strong": { color: "#4fc3f7" },
-                  "& em": { color: "#a5d6a7", fontStyle: "italic" },
-                  "& ul": { paddingLeft: 3, marginBottom: 2 },
-                  "& li": { marginBottom: 1 },
+                  borderRadius: 3,
+                  borderLeft: "4px solid #3f51b5",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+                  "& p": {
+                    marginBottom: 2,
+                    color: "#e0e0e0",
+                    fontSize: "1rem",
+                    lineHeight: 1.7,
+                  },
+                  "& strong": {
+                    color: "#4fc3f7",
+                    fontWeight: 600,
+                  },
+                  "& em": {
+                    color: "#81c784",
+                    fontStyle: "italic",
+                    fontWeight: 500,
+                  },
+                  "& ul": {
+                    paddingLeft: 3,
+                    marginBottom: 2,
+                    listStyleType: "none",
+                  },
+                  "& li": {
+                    marginBottom: 1.5,
+                    position: "relative",
+                    paddingLeft: "1.5rem",
+                    "&:before": {
+                      content: '"•"',
+                      color: "#4fc3f7",
+                      position: "absolute",
+                      left: 0,
+                      fontSize: "1.5rem",
+                      lineHeight: "1rem",
+                    },
+                  },
+                  "& h2, & h3, & h4, & h5, & h6": {
+                    color: "#bb86fc",
+                    marginTop: "1.5rem",
+                    marginBottom: "1rem",
+                  },
                 }}
               >
-                <VuiTypography variant="h6" sx={{ color: "#4fc3f7", mb: 2 }}>
+                <VuiTypography
+                  variant="h5"
+                  sx={{
+                    color: "#bb86fc",
+                    mb: 2,
+                    fontWeight: 600,
+                  }}
+                >
                   {explanation.interpretation.summary}
                 </VuiTypography>
-                <Divider sx={{ bgcolor: "#4fc3f7", mb: 3 }} />
-                <VuiTypography variant="body1" sx={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
+
+                <Divider
+                  sx={{
+                    bgcolor: "rgba(63, 81, 181, 0.5)",
+                    mb: 3,
+                    height: "1px",
+                  }}
+                />
+
+                <VuiTypography
+                  variant="body1"
+                  sx={{
+                    whiteSpace: "pre-wrap",
+                    lineHeight: 1.7,
+                    "& a": {
+                      color: "#4fc3f7",
+                      textDecoration: "underline",
+                      "&:hover": {
+                        color: "#bb86fc",
+                      },
+                    },
+                  }}
+                >
                   {explanation.interpretation.interpretation.split("\n\n").map((paragraph, i) => (
                     <React.Fragment key={i}>
-                      {paragraph}
-                      <br />
-                      <br />
+                      {paragraph.startsWith("**") ? (
+                        <VuiTypography
+                          component="div"
+                          variant="h6"
+                          sx={{
+                            color: "#bb86fc",
+                            mt: i > 0 ? 3 : 0,
+                            mb: 1.5,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {paragraph.replace(/\*\*/g, "")}
+                        </VuiTypography>
+                      ) : (
+                        <>
+                          {paragraph}
+                          <br />
+                          <br />
+                        </>
+                      )}
                     </React.Fragment>
                   ))}
                 </VuiTypography>
+
+                {explanation.interpretation.disclaimer && (
+                  <Box
+                    sx={{
+                      mt: 4,
+                      p: 2,
+                      backgroundColor: "rgba(239, 154, 154, 0.1)",
+                      borderLeft: "3px solid #ef9a9a",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    <VuiTypography
+                      variant="body2"
+                      sx={{
+                        color: "#ef9a9a",
+                        fontStyle: "italic",
+                      }}
+                    >
+                      {explanation.interpretation.disclaimer}
+                    </VuiTypography>
+                  </Box>
+                )}
               </Box>
             ) : (
-              <VuiTypography sx={{ color: "#ef9a9a" }}>No interpretation available.</VuiTypography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minHeight: "200px",
+                  p: 3,
+                  textAlign: "center",
+                }}
+              >
+                <VuiTypography
+                  variant="h6"
+                  sx={{
+                    color: "#ef9a9a",
+                    fontWeight: 500,
+                  }}
+                >
+                  No interpretation available
+                </VuiTypography>
+                <VuiTypography
+                  variant="body2"
+                  sx={{
+                    color: "#b0bec5",
+                    mt: 1,
+                  }}
+                >
+                  Please check the transaction hash or try again later
+                </VuiTypography>
+              </Box>
             )}
           </Box>
         </Box>

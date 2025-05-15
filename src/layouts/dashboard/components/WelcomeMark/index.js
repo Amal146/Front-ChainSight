@@ -153,6 +153,7 @@ const WelcomeMark = () => {
             sx={{
               flex: 1,
               p: 2,
+              fontSize: "0.85rem",
               backgroundColor: "#f9f9f9",
               overflowY: "auto",
             }}
@@ -162,6 +163,7 @@ const WelcomeMark = () => {
                 key={index}
                 sx={{
                   mb: 1,
+                  fontSize: "0.85rem",
                   display: "flex",
                   justifyContent: msg.from === "user" ? "flex-end" : "flex-start",
                 }}
@@ -169,6 +171,7 @@ const WelcomeMark = () => {
                 <VuiBox
                   sx={{
                     px: 2,
+                    fontSize: "0.85rem",
                     py: 1,
                     borderRadius: 2,
                     backgroundColor: msg.from === "user" ? "#1976d2" : "#e0e0e0",
