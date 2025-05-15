@@ -4,10 +4,11 @@ import React, { useState, useEffect } from "react";
 import VuiBox from "components/VuiBox";
 import VuiTypography from "components/VuiTypography";
 import VuiBadge from "components/VuiBadge";
-import { Modal, Button, Box, Divider, CircularProgress } from "@mui/material";
+import { Alert, Modal, Button, Box, Divider, CircularProgress } from "@mui/material";
 // Vision UI Dashboard React examples
 import Table from "examples/Tables/Table";
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -18,6 +19,7 @@ const Transactions = () => {
   const [selectedTx, setSelectedTx] = useState(null);
   const [explanation, setExplanation] = useState(null);
   const [explaining, setExplaining] = useState(false);
+  const [showPremiumAlert, setShowPremiumAlert] = useState(false);
   const rowsPerPage = 10;
 
   useEffect(() => {
@@ -54,7 +56,10 @@ const Transactions = () => {
 
     return <VuiBadge variant="contained" color={status} badgeContent={statusText} container />;
   };
-
+  const handleGenerateTaxReport = () => {
+    setShowPremiumAlert(true);
+    setTimeout(() => setShowPremiumAlert(false), 5000);
+  };
   const handleExplainClick = async (tx) => {
     setSelectedTx(tx);
     setOpenModal(true);
@@ -379,6 +384,36 @@ const Transactions = () => {
           </Box>
         </Box>
       </Modal>
+      <VuiBox mt={3} display="flex" justifyContent="flex-end">
+        <Button
+          variant="contained"
+          startIcon={<ReceiptLongIcon />}
+          onClick={handleGenerateTaxReport}
+          sx={{
+            backgroundColor: "#bb86fc",
+            color: "#121212",
+            "&:hover": {
+              backgroundColor: "#9a67ea",
+            },
+          }}
+        >
+          Generate Tax Summary Report
+        </Button>
+      </VuiBox>
+      {showPremiumAlert && (
+        <Alert
+          severity="info"
+          sx={{
+            mt: 2,
+            backgroundColor: "rgba(187, 134, 252, 0.1)",
+            color: "#bb86fc",
+            border: "1px solid #bb86fc",
+          }}
+        >
+          This feature is only available with a premium subscription. Upgrade now for advanced tax
+          reporting.
+        </Alert>
+      )}
     </VuiBox>
   );
 };
