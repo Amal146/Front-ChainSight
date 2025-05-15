@@ -182,7 +182,7 @@ function SignIn() {
             >
               Connect Ethereum Wallet
             </VuiButton>
-            <VuiButton 
+            {/* <VuiButton 
               color="info" 
               fullWidth 
               mt={2}
@@ -190,7 +190,7 @@ function SignIn() {
               startIcon={<SiBinance size="16px" />}
             >
               Connect BSC Wallet
-            </VuiButton>
+            </VuiButton> */}
           </VuiBox>
         )}
         {errors.wallet && (

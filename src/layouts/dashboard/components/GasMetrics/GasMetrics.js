@@ -219,9 +219,10 @@ const GasMetricsDashboard = () => {
               key={days}
               onClick={() => handleTimeframeChange(days)}
               sx={{
-                px: 2,
-                py: 1,
-                mr: 1,
+                px: 1,
+                py: 0.5,
+                mr: 0.5,
+                fontSize:   '14px',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 backgroundColor: data.timeframe === days ? '#0075FF' : '#22234B',

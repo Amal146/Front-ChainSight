@@ -234,7 +234,7 @@ const GasFeeAnalytics = () => {
   return (
     <Box sx={{ color: "#ffffff", p: 2 }}>
       <Grid container spacing={4} mb={3}>
-              <Grid item xs={6} sm={3}>
+              <Grid item xs={6} sm={4}>
                 <MetricCard
                   icon={<IoWalletOutline size={20} />}
                   title="Total Gas"
@@ -244,7 +244,7 @@ const GasFeeAnalytics = () => {
                   disabled={recentTransactions.length === 0}
                 />
               </Grid>
-              <Grid item xs={6} sm={3}>
+              <Grid item xs={6} sm={4}>
                 <MetricCard
                   icon={<IoRocketOutline size={20} />}
                   title="Avg Price"
@@ -261,15 +261,15 @@ const GasFeeAnalytics = () => {
                   disabled={recentTransactions.length === 0}
                 />
               </Grid>
-              <Grid item xs={6} sm={3}>
+              <Grid item xs={6} sm={4}>
                 <MetricCard
                   icon={<IoConstructOutline size={20} />}
-                  title="Transactions"
+                  title="Total Transactions"
                   value={recentTransactions.length.toLocaleString()}
                   progress={Math.min(100, recentTransactions.length / 100)}
                 />
               </Grid>
-              <Grid item xs={6} sm={3}>
+              <Grid item xs={6} sm={4}>
                 <MetricCard
                   icon={<IoCartOutline size={20} />}
                   title="Network Avg"
@@ -310,7 +310,7 @@ const GasFeeAnalytics = () => {
             borderRadius: "12px",
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)"
           }}>
-            <Typography variant="h5" fontWeight="bold" mb={2} color="rgba(142, 153, 188, 0.78)" fontSize={48}>
+            <Typography variant="h5" fontWeight="bold" mb={2} color="rgba(142, 153, 188, 0.78)" fontSize="x-large" >
               Gas Price Trends ({timeframe === 0 ? 'All Time' : `Last ${timeframe} Days`})
             </Typography>
             
@@ -393,7 +393,7 @@ const GasFeeAnalytics = () => {
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
             height: "100%"
           }}>
-            <Typography variant="h5" fontWeight="bold" mb={2} color="rgba(142, 153, 188, 0.78)" fontSize={40} >
+            <Typography variant="h5" fontWeight="bold" mb={2} color="rgba(142, 153, 188, 0.78)" fontSize="x-large" >
               Gas Consumption Summary
             </Typography>
             <Typography variant="body2" color="rgba(255,255,255,0.7)" mb={3}>

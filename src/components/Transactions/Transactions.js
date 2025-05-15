@@ -4,13 +4,7 @@ import React, { useState, useEffect } from "react";
 import VuiBox from "components/VuiBox";
 import VuiTypography from "components/VuiTypography";
 import VuiBadge from "components/VuiBadge";
-import {
-  Modal,
-  Button,
-  Box,
-  Divider,
-  CircularProgress
-} from "@mui/material";
+import { Modal, Button, Box, Divider, CircularProgress } from "@mui/material";
 // Vision UI Dashboard React examples
 import Table from "examples/Tables/Table";
 
@@ -91,7 +85,7 @@ const Transactions = () => {
       mb={3}
       mt={3}
     >
-      <VuiTypography variant="h1" fontWeight="bold" color="white" mb={3}>
+      <VuiTypography variant="h1" fontWeight="bold" color="white" mb={3} fontSize="x-large">
         Recent Transactions
       </VuiTypography>
 
@@ -210,7 +204,7 @@ const Transactions = () => {
               >
                 <CircularProgress sx={{ color: "#4fc3f7" }} />
               </Box>
-            ) : explanation ? (
+            ) : explanation && explanation.interpretation ? (
               <Box
                 sx={{
                   backgroundColor: "#252545",
@@ -238,7 +232,7 @@ const Transactions = () => {
                 </VuiTypography>
               </Box>
             ) : (
-              <VuiTypography sx={{ color: "#ef9a9a" }}>Error loading explanation.</VuiTypography>
+              <VuiTypography sx={{ color: "#ef9a9a" }}>No interpretation available.</VuiTypography>
             )}
           </Box>
         </Box>

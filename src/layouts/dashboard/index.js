@@ -21,6 +21,7 @@ import Grid from "@mui/material/Grid";
 import Icon from "@mui/material/Icon";
 import { Card, LinearProgress, Stack } from "@mui/material";
 import Transactions from "../../components/Transactions/Transactions";
+import { useState } from "react";
 
 // Vision UI Dashboard React components
 import VuiBox from "components/VuiBox";
@@ -63,14 +64,39 @@ import { barChartOptionsDashboard } from "layouts/dashboard/data/barChartOptions
 import GasFeeAnalytics from "components/GasFeeAnalytics/GasFeeAnalytics";
 import GasMetrics from "./components/GasMetrics/GasMetrics";
 import GasMetricsDashboard from "./components/GasMetrics/GasMetrics";
+import TransactionReport from "components/TransactionReport/transactionReport";
 
 function Dashboard() {
   const { gradients } = colors;
   const { cardContent } = gradients;
+  const [wallet, setWallet] = useState("0x742d35Cc6634C0532925a3b844Bc454e4438f44e");
 
   return (
     <DashboardLayout>
       <DashboardNavbar />
+      <div
+        style={{
+          backgroundColor: "#1E1E2F",
+          padding: "1rem 1.5rem",
+          borderRadius: "12px",
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+          marginBottom: "1rem",
+          border: "1px solid #333",
+        }}
+      >
+        <img
+          src={require("assets/images/logo-CS.png")}
+          alt="ChainsightAILogo"
+          style={{ height: "40px", objectFit: "contain" }}
+        />
+        <p style={{ color: "#CCCCCC", margin: 0, fontSize: "0.95rem" }}>
+          🚧 <strong>Note:</strong> This web app is still under construction 🏗️. Some features may
+          not work ⚠️ and others may not be relevant 🤖.
+        </p>
+      </div>
+
       <VuiBox sx={{ padding: 3 }}>
         <WelcomeMark />
       </VuiBox>
@@ -83,6 +109,17 @@ function Dashboard() {
       <VuiBox sx={{ padding: 3 }}>
         <Transactions />
       </VuiBox>
+      <div style={{ maxWidth: 800, margin: "auto", padding: "20px" }}>
+        <h2>🔍 Ethereum Fraud Detection</h2>
+        <input
+          type="text"
+          value={wallet}
+          onChange={(e) => setWallet(e.target.value)}
+          placeholder="Enter Ethereum wallet address"
+          style={{ width: "100%", padding: "10px", marginBottom: "20px" }}
+        />
+        <TransactionReport walletAddress={wallet} />
+      </div>
       {/* <VuiBox py={3}>
         <VuiBox mb={3}>
           <Grid container spacing={3}>
