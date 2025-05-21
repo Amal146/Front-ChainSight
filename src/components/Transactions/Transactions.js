@@ -30,10 +30,10 @@ const Transactions = () => {
         );
         const data = await response.json();
         if (data.status === "1") {
-          const processedTransactions = data.result.map(tx => ({
+          const processedTransactions = data.result.map((tx) => ({
             ...tx,
             isSuspicious: checkIfSuspicious(tx),
-            riskLevel: calculateRiskLevel(tx)
+            riskLevel: calculateRiskLevel(tx),
           }));
           setTransactions(processedTransactions || []);
         } else {
@@ -55,7 +55,7 @@ const Transactions = () => {
     const isVerySmallValue = valueInEth > 0 && valueInEth < 0.0001;
     const isContractCreation = tx.to === "";
     const isUnusualGas = parseInt(tx.gasPrice) > 200000000000; // 200 Gwei
-    
+
     return isFailed || isVerySmallValue || isContractCreation || isUnusualGas;
   };
 
@@ -65,7 +65,7 @@ const Transactions = () => {
     if (parseInt(tx.value) / 1e18 < 0.0001) score += 20;
     if (tx.to === "") score += 25;
     if (parseInt(tx.gasPrice) > 200000000000) score += 25;
-    
+
     if (score >= 50) return "High";
     if (score >= 30) return "Medium";
     return "Low";
@@ -75,13 +75,13 @@ const Transactions = () => {
     const colors = {
       High: "error",
       Medium: "warning",
-      Low: "success"
+      Low: "success",
     };
-    
+
     const icons = {
       High: <WarningAmberIcon sx={{ fontSize: "16px", mr: 0.5 }} />,
       Medium: <InfoOutlinedIcon sx={{ fontSize: "16px", mr: 0.5 }} />,
-      Low: <CheckCircleOutlineIcon sx={{ fontSize: "16px", mr: 0.5 }} />
+      Low: <CheckCircleOutlineIcon sx={{ fontSize: "16px", mr: 0.5 }} />,
     };
 
     return (
@@ -105,14 +105,7 @@ const Transactions = () => {
     const status = tx.isError === "0" ? "success" : "error";
     const statusText = tx.isError === "0" ? "Success" : "Failed";
 
-    return (
-      <VuiBadge 
-        variant="contained" 
-        color={status} 
-        badgeContent={statusText} 
-        container 
-      />
-    );
+    return <VuiBadge variant="contained" color={status} badgeContent={statusText} container />;
   };
 
   const handleGenerateTaxReport = () => {
@@ -136,11 +129,7 @@ const Transactions = () => {
       const data = await response.json();
       setExplanation(data);
     } catch (err) {
-      setExplanation({ 
-        summary: "Error fetching explanation",
-        interpretation: "Failed to retrieve transaction analysis. Please try again later or check the transaction hash.",
-        disclaimer: "Network error occurred while fetching data."
-      });
+      setExplanation({ summary: "Error fetching explanation." });
     } finally {
       setExplaining(false);
     }
@@ -171,11 +160,11 @@ const Transactions = () => {
           <CircularProgress sx={{ color: "#4fc3f7" }} />
         </VuiBox>
       ) : error ? (
-        <VuiBox 
-          display="flex" 
-          flexDirection="column" 
-          alignItems="center" 
-          justifyContent="center" 
+        <VuiBox
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
           minHeight="200px"
           p={3}
           textAlign="center"
@@ -209,33 +198,33 @@ const Transactions = () => {
                   </VuiTypography>
                 </Tooltip>
               ),
-              "From": (
+              From: (
                 <Tooltip title={tx.from} arrow>
                   <VuiTypography variant="caption" color="white" fontWeight="medium">
                     {formatAddress(tx.from)}
                   </VuiTypography>
                 </Tooltip>
               ),
-              "To": (
+              To: (
                 <Tooltip title={tx.to || "Contract Creation"} arrow>
                   <VuiTypography variant="caption" color="white" fontWeight="medium">
                     {tx.to ? formatAddress(tx.to) : "Contract Creation"}
                   </VuiTypography>
                 </Tooltip>
               ),
-              "Value": (
+              Value: (
                 <VuiTypography variant="caption" color="white" fontWeight="medium">
                   {(parseInt(tx.value) / 1e18).toFixed(6)} ETH
                 </VuiTypography>
               ),
-              "Status": getStatusBadge(tx),
-              "Risk": getSuspiciousBadge(tx.isSuspicious, tx.riskLevel),
-              "Date": (
+              Status: getStatusBadge(tx),
+              Risk: getSuspiciousBadge(tx.isSuspicious, tx.riskLevel),
+              Date: (
                 <VuiTypography variant="caption" color="white" fontWeight="medium">
                   {new Date(tx.timeStamp * 1000).toLocaleString()}
                 </VuiTypography>
               ),
-              "Actions": (
+              Actions: (
                 <Button
                   variant="outlined"
                   size="small"
@@ -245,8 +234,8 @@ const Transactions = () => {
                     borderColor: "#61dafb",
                     "&:hover": {
                       backgroundColor: "rgba(97, 218, 251, 0.1)",
-                      borderColor: "#4fc3f7"
-                    }
+                      borderColor: "#4fc3f7",
+                    },
                   }}
                 >
                   Explain
@@ -259,7 +248,7 @@ const Transactions = () => {
             <VuiTypography variant="caption" color="text">
               Showing {paginatedTransactions.length} of {transactions.length} transactions
             </VuiTypography>
-            
+
             <Button
               variant="contained"
               startIcon={<ReceiptLongIcon />}
@@ -314,7 +303,9 @@ const Transactions = () => {
             overflow: "hidden",
           }}
         >
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Box
+            sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}
+          >
             <VuiTypography variant="h5" sx={{ color: "#4fc3f7", fontWeight: "bold" }}>
               🧠 Transaction Analysis
             </VuiTypography>
@@ -344,12 +335,10 @@ const Transactions = () => {
               <Box
                 sx={{
                   display: "flex",
-                  flexDirection: "column",
                   justifyContent: "center",
                   alignItems: "center",
                   height: "100%",
                   minHeight: "200px",
-                  gap: 2
                 }}
               >
                 <CircularProgress
@@ -359,11 +348,8 @@ const Transactions = () => {
                     height: "60px !important",
                   }}
                 />
-                <VuiTypography variant="body2" color="text">
-                  Analyzing transaction details...
-                </VuiTypography>
               </Box>
-            ) : explanation ? (
+            ) : explanation && explanation.interpretation ? (
               <Box
                 sx={{
                   backgroundColor: "#1a1a2e",
@@ -404,6 +390,11 @@ const Transactions = () => {
                       lineHeight: "1rem",
                     },
                   },
+                  "& h2, & h3, & h4, & h5, & h6": {
+                    color: "#bb86fc",
+                    marginTop: "1.5rem",
+                    marginBottom: "1rem",
+                  },
                 }}
               >
                 <VuiTypography
@@ -412,13 +403,9 @@ const Transactions = () => {
                     color: "#bb86fc",
                     mb: 2,
                     fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1
                   }}
                 >
-                  <InfoOutlinedIcon />
-                  {explanation.summary || "Transaction Overview"}
+                  {explanation.interpretation.summary}
                 </VuiTypography>
 
                 <Divider
@@ -429,53 +416,47 @@ const Transactions = () => {
                   }}
                 />
 
-                {explanation.interpretation ? (
-                  <VuiTypography
-                    variant="body1"
-                    sx={{
-                      whiteSpace: "pre-wrap",
-                      lineHeight: 1.7,
-                      "& a": {
-                        color: "#4fc3f7",
-                        textDecoration: "underline",
-                        "&:hover": {
-                          color: "#bb86fc",
-                        },
+                <VuiTypography
+                  variant="body1"
+                  sx={{
+                    whiteSpace: "pre-wrap",
+                    lineHeight: 1.7,
+                    "& a": {
+                      color: "#4fc3f7",
+                      textDecoration: "underline",
+                      "&:hover": {
+                        color: "#bb86fc",
                       },
-                    }}
-                  >
-                    {explanation.interpretation.split("\n\n").map((paragraph, i) => (
-                      <React.Fragment key={i}>
-                        {paragraph.startsWith("**") ? (
-                          <VuiTypography
-                            component="div"
-                            variant="h6"
-                            sx={{
-                              color: "#bb86fc",
-                              mt: i > 0 ? 3 : 0,
-                              mb: 1.5,
-                              fontWeight: 600,
-                            }}
-                          >
-                            {paragraph.replace(/\*\*/g, "")}
-                          </VuiTypography>
-                        ) : (
-                          <>
-                            {paragraph}
-                            <br />
-                            <br />
-                          </>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </VuiTypography>
-                ) : (
-                  <VuiTypography variant="body1" color="text">
-                    No detailed interpretation available for this transaction.
-                  </VuiTypography>
-                )}
+                    },
+                  }}
+                >
+                  {explanation.interpretation.interpretation.split("\n\n").map((paragraph, i) => (
+                    <React.Fragment key={i}>
+                      {paragraph.startsWith("**") ? (
+                        <VuiTypography
+                          component="div"
+                          variant="h6"
+                          sx={{
+                            color: "#bb86fc",
+                            mt: i > 0 ? 3 : 0,
+                            mb: 1.5,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {paragraph.replace(/\*\*/g, "")}
+                        </VuiTypography>
+                      ) : (
+                        <>
+                          {paragraph}
+                          <br />
+                          <br />
+                        </>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </VuiTypography>
 
-                {explanation.disclaimer && (
+                {explanation.interpretation.disclaimer && (
                   <Box
                     sx={{
                       mt: 4,
@@ -492,7 +473,7 @@ const Transactions = () => {
                         fontStyle: "italic",
                       }}
                     >
-                      {explanation.disclaimer}
+                      {explanation.interpretation.disclaimer}
                     </VuiTypography>
                   </Box>
                 )}
@@ -509,7 +490,6 @@ const Transactions = () => {
                   textAlign: "center",
                 }}
               >
-                <ErrorOutlineIcon sx={{ color: "#ef9a9a", fontSize: "3rem", mb: 2 }} />
                 <VuiTypography
                   variant="h6"
                   sx={{
@@ -517,7 +497,7 @@ const Transactions = () => {
                     fontWeight: 500,
                   }}
                 >
-                  Analysis Unavailable
+                  No interpretation available
                 </VuiTypography>
                 <VuiTypography
                   variant="body2"
@@ -526,7 +506,7 @@ const Transactions = () => {
                     mt: 1,
                   }}
                 >
-                  Could not retrieve analysis for this transaction
+                  Please check the transaction hash or try again later
                 </VuiTypography>
               </Box>
             )}
