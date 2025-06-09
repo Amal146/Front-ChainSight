@@ -69,7 +69,7 @@ import TransactionReport from "components/TransactionReport/transactionReport";
 function Dashboard() {
   const { gradients } = colors;
   const { cardContent } = gradients;
-  const [wallet, setWallet] = useState("0x742d35Cc6634C0532925a3b844Bc454e4438f44e");
+  const [wallet, setWallet] = useState("0xE11D08e4EA85dc79d63020d99f02f659B17F36DB");
 
   return (
     <DashboardLayout>
@@ -96,17 +96,25 @@ function Dashboard() {
           not work ⚠️ and others may not be relevant 🤖.
         </p>
       </div>
-
-      <VuiBox sx={{ padding: 3 }}>
+      <VuiBox sx={{ 
+  display: 'flex', 
+  flexDirection: 'row', 
+  width: '100%',
+  gap: '16px'}}>
+      <VuiBox sx={{ padding: 1 , width:'30%' }}>
         <WelcomeMark />
       </VuiBox>
-      <VuiBox sx={{ padding: 3 }}>
+
+      <VuiBox sx={{ padding: 1 , width:'70%' }}>
         <GasMetricsDashboard />
       </VuiBox>
-      <VuiBox sx={{ padding: 3 }}>
+      </VuiBox>
+      
+      <VuiBox sx={{ padding: 1 }}>
         <GasFeeAnalytics />
       </VuiBox>
-      <VuiBox sx={{ padding: 3 }}>
+
+      <VuiBox sx={{ padding: 1 }}>
         <Transactions />
       </VuiBox>
       {/* <div style={{ maxWidth: 800, margin: "auto", padding: "20px" }}>

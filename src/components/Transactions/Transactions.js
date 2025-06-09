@@ -20,13 +20,14 @@ const Transactions = () => {
   const [explanation, setExplanation] = useState(null);
   const [explaining, setExplaining] = useState(false);
   const [showPremiumAlert, setShowPremiumAlert] = useState(false);
-  const rowsPerPage = 10;
+  const [txTypes, setTxTypes] = useState({}); // Store transaction type predictions
+  const rowsPerPage = 20;
 
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
         const response = await fetch(
-          `https://api.etherscan.io/api?module=account&action=txlist&address=0x7e2a2FA2a064F693f0a55C5639476d913Ff12D05&startblock=0&endblock=99999999&sort=desc&apikey=V8RHS7P2YNSAHUY92CXVANVQK8MIYK95UQ`
+          `https://api.etherscan.io/api?module=account&action=txlist&address=0xE11D08e4EA85dc79d63020d99f02f659B17F36DB&startblock=0&endblock=99999999&sort=desc&apikey=V8RHS7P2YNSAHUY92CXVANVQK8MIYK95UQ`
         );
         const data = await response.json();
         if (data.status === "1") {
@@ -36,6 +37,9 @@ const Transactions = () => {
             riskLevel: calculateRiskLevel(tx),
           }));
           setTransactions(processedTransactions || []);
+
+          // Fetch transaction types for the first page
+          predictTransactionTypes(processedTransactions.slice(0, rowsPerPage));
         } else {
           throw new Error(data.message || "Failed to fetch transactions");
         }
@@ -48,6 +52,109 @@ const Transactions = () => {
 
     fetchTransactions();
   }, []);
+
+  const calculateTxFee = (tx) => {
+    const gasPrice = parseInt(tx.gasPrice);
+    const gasUsed = parseInt(tx.gasUsed);
+    return (gasPrice * gasUsed) / 1e18; // Convert from wei to ETH
+  };
+
+  // Predict transaction types when page changes
+  useEffect(() => {
+    if (transactions.length > 0) {
+      const startIdx = (page - 1) * rowsPerPage;
+      const endIdx = page * rowsPerPage;
+      predictTransactionTypes(transactions.slice(startIdx, endIdx));
+    }
+  }, [page, transactions]);
+
+  const predictTransactionTypes = async (txs) => {
+    try {
+      const predictions = {};
+
+      for (const tx of txs) {
+        try {
+          const timestamp = new Date(tx.timeStamp * 1000);
+          const hour = timestamp.getHours();
+          const dayOfWeek = timestamp.getDay();
+          const month = timestamp.getMonth();
+
+          // Calculate protocol (you'll need to implement your protocol detection logic)
+          const protocol = protocol_mappings[tx.to?.toLowerCase()] || "other";
+
+          // Prepare features exactly as your model expects
+          const txFeatures = {
+            value_eth: parseInt(tx.value) / 1e18,
+            gas_cost_eth: (parseInt(tx.gasPrice) * parseInt(tx.gasUsed)) / 1e18,
+            tx_fee_ratio:
+              (parseInt(tx.gasPrice) * parseInt(tx.gasUsed)) / Math.max(parseInt(tx.value), 1),
+            is_contract_tx: tx.input !== "0x" ? 1 : 0,
+            input_length: tx.input?.length || 0,
+            is_high_value: parseInt(tx.value) / 1e18 > 1 ? 1 : 0,
+            is_low_value: parseInt(tx.value) / 1e18 < 0.01 ? 1 : 0,
+            is_weekend: [0, 6].includes(dayOfWeek) ? 1 : 0,
+            hour: hour,
+            day_of_week: dayOfWeek,
+            month: month + 1, // JavaScript months are 0-indexed
+            time_of_day: getTimeOfDay(hour),
+            is_defi: protocol_mappings[tx.to?.toLowerCase()] === "Uniswap" ? 1 : 0, // Example
+            is_nft: protocol_mappings[tx.to?.toLowerCase()] === "OpenSea" ? 1 : 0, // Example
+            protocol: protocol,
+          };
+
+          // Call your API
+          const response = await fetch("http://127.0.0.1:8000/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(txFeatures),
+          });
+
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+          const data = await response.json();
+          predictions[tx.hash] = {
+            type: data.predicted_class, // "1", "2", etc.
+            confidence: data.confidence, // 0.9978 (number)
+            probabilities: data.probabilities, // { "0": 0.0003, "1": 0.9978, ... }
+          };
+        } catch (error) {
+          console.error(`Error processing tx ${tx.hash}:`, error);
+          predictions[tx.hash] = "Unknown";
+        }
+      }
+
+      setTxTypes((prev) => ({ ...prev, ...predictions }));
+    } catch (error) {
+      console.error("Error in predictTransactionTypes:", error);
+      // Fallback for all transactions if general error occurs
+      const fallbackPredictions = {};
+      txs.forEach((tx) => {
+        fallbackPredictions[tx.hash] = "Unknown";
+      });
+      setTxTypes((prev) => ({ ...prev, ...fallbackPredictions }));
+    }
+  };
+
+  // Helper function to match your model's time_of_day categories
+  const getTimeOfDay = (hour) => {
+    if (hour >= 0 && hour < 6) return "night";
+    if (hour >= 6 && hour < 12) return "morning";
+    if (hour >= 12 && hour < 18) return "afternoon";
+    return "evening";
+  };
+
+  // You'll need to implement this based on your protocol detection
+  const protocol_mappings = {
+    "0x7a250d5630b4cf539739df2c5dacb4c659f2488d": "Uniswap",
+    "0x1111111254fb6c44bac0bed2854e76f90643097d": "1inch",
+    "0x00000000006c3852cbef3e08e8df289169ede581": "Seaport",
+    "0xdac17f958d2ee523a2206206994597c13d831ec7": "USDT",
+    "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": "WETH",
+    "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad": "Uniswap V3",
+    "0x881d40237659c251811cec9c364ef91dc08d300c": "Metamask Swap",
+    "0xdef1c0ded9bec7f1a1670819833240f027b25eff": "0x Protocol",
+    "0x7be8076f4ea4a4ad08075c2508e481d6c946d12b": "OpenSea",
+  };
 
   const checkIfSuspicious = (tx) => {
     const valueInEth = parseInt(tx.value) / 1e18;
@@ -106,6 +213,63 @@ const Transactions = () => {
     const statusText = tx.isError === "0" ? "Success" : "Failed";
 
     return <VuiBadge variant="contained" color={status} badgeContent={statusText} container />;
+  };
+
+  const getTypeBadge = (txHash) => {
+    // Get the saved data for this transaction
+    const txData = txTypes[txHash] || {
+      type: "loading",
+      confidence: 0,
+      probabilities: {},
+    };
+
+    // Map numbers to readable names
+    const typeNames = {
+      0: "ETH Transfer",
+      1: "Token Transfer",
+      2: "DeFi",
+      3: "NFT",
+      4: "Contract",
+      5: "High Fee",
+      loading: "Loading...",
+    };
+
+    const currentType = typeNames[txData.type] || "Unknown";
+
+    // Colors for each type
+    const colors = {
+      "ETH Transfer": "info",
+      "Token Transfer": "primary",
+      DeFi: "success",
+      NFT: "secondary",
+      Contract: "warning",
+      "High Fee": "error",
+      Unknown: "default",
+    };
+
+    return (
+      <Tooltip
+        title={
+          <div>
+            <strong>{currentType}</strong>
+            <p>Confidence: {(txData.confidence * 100).toFixed(1)}%</p>
+            <div>
+              {Object.entries(txData.probabilities).map(([type, prob]) => (
+                <div key={type}>
+                  {typeNames[type]}: {(prob * 100).toFixed(2)}%
+                </div>
+              ))}
+            </div>
+          </div>
+        }
+        arrow
+      >
+        <VuiBadge
+          color={colors[currentType]}
+          badgeContent={`${currentType} (${(txData.confidence * 100).toFixed(0)}%)`}
+        />
+      </Tooltip>
+    );
   };
 
   const handleGenerateTaxReport = () => {
@@ -185,8 +349,10 @@ const Transactions = () => {
               { name: "From", align: "left" },
               { name: "To", align: "left" },
               { name: "Value", align: "center" },
+              { name: "Type", align: "center" },
               { name: "Status", align: "center" },
               { name: "Risk", align: "center" },
+              { name: "Tx Fee", align: "center" },
               { name: "Date", align: "center" },
               { name: "Actions", align: "center" },
             ]}
@@ -217,6 +383,7 @@ const Transactions = () => {
                   {(parseInt(tx.value) / 1e18).toFixed(6)} ETH
                 </VuiTypography>
               ),
+              Type: getTypeBadge(tx.hash),
               Status: getStatusBadge(tx),
               Risk: getSuspiciousBadge(tx.isSuspicious, tx.riskLevel),
               Date: (
@@ -224,6 +391,12 @@ const Transactions = () => {
                   {new Date(tx.timeStamp * 1000).toLocaleString()}
                 </VuiTypography>
               ),
+              "Tx Fee": (
+                <VuiTypography variant="caption" color="white" fontWeight="medium">
+                  {calculateTxFee(tx).toFixed(6)} ETH
+                </VuiTypography>
+              ),
+
               Actions: (
                 <Button
                   variant="outlined"
@@ -245,8 +418,25 @@ const Transactions = () => {
           />
 
           <VuiBox mt={3} display="flex" justifyContent="space-between" alignItems="center">
+            <div>
+              <Button
+                onClick={() => setPage((p) => Math.max(p - 1, 1))}
+                disabled={page === 1}
+                sx={{ mr: 1 }}
+              >
+                Previous
+              </Button>
+              <Button
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page * rowsPerPage >= transactions.length}
+              >
+                Next
+              </Button>
+            </div>
+
             <VuiTypography variant="caption" color="text">
-              Showing {paginatedTransactions.length} of {transactions.length} transactions
+              Page {page} - Showing {paginatedTransactions.length} of {transactions.length}{" "}
+              transactions
             </VuiTypography>
 
             <Button
