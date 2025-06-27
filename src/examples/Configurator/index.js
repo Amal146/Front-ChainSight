@@ -216,7 +216,7 @@ function Configurator() {
 
         <Divider light />
 
-        <VuiBox mt={3} mb={2}>
+        {/* <VuiBox mt={3} mb={2}>
           <VuiBox mb={2}>
             <VuiButton
               component={Link}
@@ -284,7 +284,7 @@ function Configurator() {
               &nbsp; Share
             </VuiButton>
           </VuiBox>
-        </VuiBox>
+        </VuiBox> */}
       </VuiBox>
     </ConfiguratorRoot>
   );

@@ -17,7 +17,9 @@
 */
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory, useLocation } from "react-router-dom";
+import authService from "services/authService";
+import { useAuth } from "contexts/AuthContext";
 
 // Vision UI Dashboard React components
 import VuiBox from "components/VuiBox";
@@ -44,6 +46,9 @@ import { SiBinance } from "react-icons/si";
 import { BsWallet2 } from "react-icons/bs";
 
 function SignIn() {
+  const history = useHistory();
+  const location = useLocation();
+  const { loginWithCredentials, loginWithWallet } = useAuth();
   const [rememberMe, setRememberMe] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +57,7 @@ function SignIn() {
   const [errors, setErrors] = useState({
     email: "",
     password: "",
-    wallet: ""
+    wallet: "",
   });
 
   const handleSetRememberMe = () => setRememberMe(!rememberMe);
@@ -62,7 +67,7 @@ function SignIn() {
     return re.test(email);
   };
 
-  const handleEmailPasswordSignIn = (e) => {
+  const handleEmailPasswordSignIn = async (e) => {
     e.preventDefault();
     let valid = true;
     const newErrors = { email: "", password: "" };
@@ -86,34 +91,46 @@ function SignIn() {
     setErrors(newErrors);
 
     if (valid) {
-      // Proceed with email/password sign in
-      console.log("Signing in with email:", email);
-      // Add your authentication logic here
+      try {
+        const response = await authService.login(email, password);
+        const data = response.data;
+        await loginWithCredentials(data.token); 
+
+        // Redirect to dashboard or previous location
+        const { from } = location.state || { from: { pathname: "/dashboard" } };
+        history.replace(from);
+      } catch (error) {
+        console.error("Login error:", error.response?.data?.message || error.message);
+        setErrors({
+          ...errors,
+          email: "Invalid credentials",
+          password: "Invalid credentials",
+        });
+      }
     }
   };
 
   const handleWalletSignIn = async () => {
     if (!window.ethereum) {
-      setErrors({...errors, wallet: "Please install MetaMask or another Web3 wallet"});
+      setErrors({ ...errors, wallet: "Please install MetaMask or another Web3 wallet" });
       return;
     }
 
     try {
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       if (accounts.length > 0) {
-        setWalletAddress(accounts[0]);
-        setIsWalletConnected(true);
-        setErrors({...errors, wallet: ""});
+        await loginWithWallet(accounts[0]); 
         
-        // Proceed with wallet authentication
-        console.log("Signing in with wallet:", accounts[0]);
-        // Add your wallet authentication logic here
+        // Redirect to dashboard or previous location
+        const { from } = location.state || { from: { pathname: '/dashboard' } };
+        history.replace(from);
       }
     } catch (err) {
-      setErrors({...errors, wallet: "Wallet connection failed"});
+      setErrors({ ...errors, wallet: "Wallet connection failed" });
       console.error("Wallet connection failed:", err);
     }
   };
+
 
   const handleDisconnectWallet = () => {
     setWalletAddress("");
@@ -157,15 +174,15 @@ function SignIn() {
         <VuiTypography variant="h6" color="white" fontWeight="medium" mb={2}>
           Sign in with Wallet
         </VuiTypography>
-        
+
         {isWalletConnected ? (
           <VuiBox>
             <VuiTypography variant="caption" color="success" mb={2}>
               Connected: {walletAddress.substring(0, 6)}...{walletAddress.substring(38)}
             </VuiTypography>
-            <VuiButton 
-              color="info" 
-              fullWidth 
+            <VuiButton
+              color="info"
+              fullWidth
               onClick={handleDisconnectWallet}
               startIcon={<BsWallet2 size="16px" />}
             >
@@ -174,9 +191,9 @@ function SignIn() {
           </VuiBox>
         ) : (
           <VuiBox>
-            <VuiButton 
-              color="info" 
-              fullWidth 
+            <VuiButton
+              color="info"
+              fullWidth
               onClick={handleWalletSignIn}
               startIcon={<FaEthereum size="16px" />}
             >
@@ -208,7 +225,13 @@ function SignIn() {
       <VuiBox component="form" role="form" onSubmit={handleEmailPasswordSignIn}>
         <VuiBox mb={2}>
           <VuiBox mb={1} ml={0.5}>
-            <VuiTypography required component="label" variant="button" color="white" fontWeight="medium">
+            <VuiTypography
+              required
+              component="label"
+              variant="button"
+              color="white"
+              fontWeight="medium"
+            >
               Email *
             </VuiTypography>
           </VuiBox>
@@ -222,9 +245,9 @@ function SignIn() {
               palette.gradients.borderLight.angle
             )}
           >
-            <VuiInput 
-              type="email" 
-              placeholder="Your email..." 
+            <VuiInput
+              type="email"
+              placeholder="Your email..."
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               sx={({ typography: { size } }) => ({
@@ -242,7 +265,13 @@ function SignIn() {
 
         <VuiBox mb={2}>
           <VuiBox mb={1} ml={0.5}>
-            <VuiTypography required component="label" variant="button" color="white" fontWeight="medium">
+            <VuiTypography
+              required
+              component="label"
+              variant="button"
+              color="white"
+              fontWeight="medium"
+            >
               Password *
             </VuiTypography>
           </VuiBox>

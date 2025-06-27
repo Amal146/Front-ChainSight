@@ -53,6 +53,13 @@ const getEfficiencyLabel = (score) => {
   return "Needs Work";
 };
 
+const generateMockNetworkAverages = (days) => {
+  return Array.from({ length: days }, (_, i) => ({
+    date: new Date(Date.now() - (days - i) * 24 * 60 * 60 * 1000).toLocaleDateString(),
+    avgPrice: 20 + Math.random() * 30, // Random between 20-50 Gwei
+  }));
+};
+
 const getEfficiencyColor = (score) => {
   if (score >= 8) return "success";
   if (score >= 6) return "info";
@@ -89,7 +96,7 @@ const GasFeeAnalytics = () => {
   const [ethPrice, setEthPrice] = useState(3000);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeframe, setTimeframe] = useState(30); // Days to analyze
+  const [timeframe, setTimeframe] = useState(365); // Days to analyze
 
   useEffect(() => {
     const fetchData = async () => {
@@ -189,6 +196,10 @@ const GasFeeAnalytics = () => {
       }
     });
 
+    // Generate mock network averages for the same dates
+    const transactionDates = Object.keys(dailyData);
+    const mockAverages = generateMockNetworkAverages(transactionDates.length);
+
     // Calculate metrics
     const gasPriceTrends = Object.entries(dailyData)
       .map(([date, data]) => ({
@@ -207,13 +218,14 @@ const GasFeeAnalytics = () => {
     const totalGasSpent = dailyGasSpent.reduce((sum, day) => sum + day.value, 0);
     const totalGasSpentUSD = totalGasSpent * ethPrice;
 
-    // Calculate comparison
+    // Calculate comparison using the mock averages
     let networkComparison = 0;
-    if (gasPriceTrends.length > 0 && gasMetrics.networkAverageGasPrice > 0) {
+    if (gasPriceTrends.length > 0 && mockAverages.length > 0) {
       const userAvg =
         gasPriceTrends.reduce((sum, day) => sum + day.avgPrice, 0) / gasPriceTrends.length;
-      networkComparison =
-        ((userAvg - gasMetrics.networkAverageGasPrice) / gasMetrics.networkAverageGasPrice) * 100;
+      const networkAvg =
+        mockAverages.reduce((sum, day) => sum + day.avgPrice, 0) / mockAverages.length;
+      networkComparison = ((userAvg - networkAvg) / networkAvg) * 100;
     }
 
     return {
@@ -222,14 +234,16 @@ const GasFeeAnalytics = () => {
       totalGasSpentUSD,
       networkAverageComparison: networkComparison,
       dailyGasSpent,
+      networkAverages: mockAverages, // Add this to use in the chart
     };
   };
 
   // Chart data
-  const lineChartData = gasMetrics.gasPriceTrends.map((item) => ({
+  const lineChartData = gasMetrics.gasPriceTrends.map((item, index) => ({
     date: item.date,
     "Your Gas Price (Gwei)": item.avgPrice,
-    "Network Average (Gwei)": gasMetrics.networkAverageGasPrice,
+    "Network Average (Gwei)":
+      gasMetrics.networkAverages[index]?.avgPrice || gasMetrics.networkAverageGasPrice,
   }));
 
   const barChartData = gasMetrics.dailyGasSpent.map((item) => ({

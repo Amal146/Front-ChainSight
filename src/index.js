@@ -23,14 +23,19 @@ import App from "App";
 
 // Vision UI Dashboard React Context Provider
 import { VisionUIControllerProvider } from "context";
+import { AuthProvider } from "contexts/AuthContext";
 
 const rootElement = document.getElementById('root');
 const root = createRoot(rootElement);
 
 
-root.render(<BrowserRouter>
-  <VisionUIControllerProvider>
-    <App />
-  </VisionUIControllerProvider>
-</BrowserRouter>)
+root.render(
+  <BrowserRouter>
+    <VisionUIControllerProvider>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </VisionUIControllerProvider>
+  </BrowserRouter>
+);
 

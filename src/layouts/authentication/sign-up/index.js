@@ -18,7 +18,8 @@
 import { useState } from "react";
 
 // react-router-dom components
-import { Link } from "react-router-dom";
+import { Link, useHistory  } from "react-router-dom";
+
 
 // @mui material components
 import Icon from "@mui/material/Icon";
@@ -49,6 +50,7 @@ import CoverLayout from "layouts/authentication/components/CoverLayout";
 
 // Images
 import bgSignIn from "assets/images/blockchainbg.jpg";
+import authService from "services/authService";
 
 function SignIn() {
   const [rememberMe, setRememberMe] = useState(true);
@@ -60,51 +62,47 @@ function SignIn() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showOtherInput, setShowOtherInput] = useState(false);
   const [otherBlockchain, setOtherBlockchain] = useState("");
+  const history = useHistory();
 
   const handleSetRememberMe = () => setRememberMe(!rememberMe);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation checks
-    if (!username) {
-      alert("Please enter a username.");
+
+    if (
+      !username ||
+      !email ||
+      !password ||
+      !confirmPassword ||
+      !walletAddress ||
+      !selectedBlockchain
+    ) {
+      alert("Please fill out all required fields.");
       return;
     }
-    if (!email) {
-      alert("Please enter an email.");
-      return;
-    }
-    if (!password) {
-      alert("Please enter a password.");
-      return;
-    }
+
     if (password !== confirmPassword) {
       alert("Passwords don't match!");
       return;
     }
-    if (!walletAddress) {
-      alert("Please connect your wallet.");
-      return;
-    }
-    if (!selectedBlockchain) {
-      alert("Please select a blockchain type.");
-      return;
-    }
-    if (selectedBlockchain === "other" && !otherBlockchain) {
-      alert("Please specify the blockchain name.");
-      return;
-    }
 
-    // Form submission logic here
     const blockchainType = selectedBlockchain === "other" ? otherBlockchain : selectedBlockchain;
-    console.log("Form submitted successfully", {
-      username,
-      email,
-      password,
-      walletAddress,
-      blockchainType
-    });
+
+    try {
+      const response = await authService.register(
+        username,
+        email,
+        password,
+        walletAddress,
+        blockchainType
+      );
+      console.log("Signup successful", response.data);
+      alert("Registration successful. You can now log in.");
+      history.push('/authentication/sign-in');
+    } catch (error) {
+      console.error("Signup error", error.response?.data || error.message);
+      alert(error.response?.data?.message || "Signup failed. Try again.");
+    }
   };
 
   return (
@@ -161,7 +159,7 @@ function SignIn() {
           >
             Register Your Wallet
           </VuiTypography>
-          
+
           {/* Username */}
           <VuiBox mb={2}>
             <VuiBox mb={1} ml={0.5}>
@@ -196,7 +194,7 @@ function SignIn() {
               />
             </GradientBorder>
           </VuiBox>
-          
+
           {/* Email */}
           <VuiBox mb={2}>
             <VuiBox mb={1} ml={0.5}>
@@ -479,11 +477,7 @@ function SignIn() {
           </VuiBox>
 
           {/* Sign Up Button */}
-          <VuiButton
-            type="submit"
-            color="info"
-            fullWidth
-          >
+          <VuiButton type="submit" color="info" fullWidth>
             SIGN UP
           </VuiButton>
 

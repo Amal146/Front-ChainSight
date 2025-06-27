@@ -47,6 +47,7 @@ import routes from "routes";
 
 // Vision UI Dashboard React contexts
 import { useVisionUIController, setMiniSidenav, setOpenConfigurator } from "context";
+import ProtectedRoute from "components/ProtectedRoute";
 
 export default function App() {
   const [controller, dispatch] = useVisionUIController();
@@ -102,7 +103,14 @@ export default function App() {
       }
 
       if (route.route) {
-        return <Route exact path={route.route} component={route.component} key={route.key} />;
+        // Protect all routes except sign-in/sign-up
+        if (route.key === "sign-in" || route.key === "sign-up") {
+          return <Route exact path={route.route} component={route.component} key={route.key} />;
+        } else {
+          return (
+            <ProtectedRoute exact path={route.route} component={route.component} key={route.key} />
+          );
+        }
       }
 
       return null;

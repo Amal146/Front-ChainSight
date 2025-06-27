@@ -9,6 +9,11 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable"; // Import autoTable separately
+import html2canvas from "html2canvas";
+import Chart from 'chart.js/auto';
 
 const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
@@ -22,6 +27,12 @@ const Transactions = () => {
   const [showPremiumAlert, setShowPremiumAlert] = useState(false);
   const [txTypes, setTxTypes] = useState({}); // Store transaction type predictions
   const rowsPerPage = 20;
+  const [fraudPredictions, setFraudPredictions] = useState({});
+  const CONFIDENCE_THRESHOLDS = {
+    HIGH_CONFIDENCE: 0.7, // 70%+ confidence - definite result
+    MEDIUM_CONFIDENCE: 0.4, // 40-70% confidence - warning
+    LOW_CONFIDENCE: 0.2, // Below 40% - needs manual review
+  };
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -40,6 +51,7 @@ const Transactions = () => {
 
           // Fetch transaction types for the first page
           predictTransactionTypes(processedTransactions.slice(0, rowsPerPage));
+          fetchFraudPredictions(processedTransactions.slice(0, rowsPerPage));
         } else {
           throw new Error(data.message || "Failed to fetch transactions");
         }
@@ -65,6 +77,7 @@ const Transactions = () => {
       const startIdx = (page - 1) * rowsPerPage;
       const endIdx = page * rowsPerPage;
       predictTransactionTypes(transactions.slice(startIdx, endIdx));
+      fetchFraudPredictions(transactions.slice(startIdx, endIdx));
     }
   }, [page, transactions]);
 
@@ -103,7 +116,7 @@ const Transactions = () => {
           };
 
           // Call your API
-          const response = await fetch("http://127.0.0.1:8000/predict", {
+          const response = await fetch("https://classifiersserver.onrender.com/classify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(txFeatures),
@@ -178,32 +191,83 @@ const Transactions = () => {
     return "Low";
   };
 
-  const getSuspiciousBadge = (isSuspicious, riskLevel) => {
-    const colors = {
-      High: "error",
-      Medium: "warning",
-      Low: "success",
+  const calculateRiskScore = (tx) => {
+    let score = 0;
+    if (tx.isError !== "0") score += 30;
+    if (parseInt(tx.value) / 1e18 < 0.0001) score += 20;
+    if (tx.to === "") score += 25;
+    if (parseInt(tx.gasPrice) > 200000000000) score += 25;
+    return score;
+  };
+
+  const getSuspiciousBadge = (isSuspicious, riskLevel, riskScore) => {
+    const riskConfig = {
+      High: {
+        color: "error",
+        icon: <WarningAmberIcon sx={{ fontSize: "16px", mr: 0.5 }} />,
+        label: "High Risk",
+        tooltip: "This transaction has multiple high-risk characteristics",
+        gradient: "linear-gradient(135deg, #ff5252, #d32f2f)",
+      },
+      Medium: {
+        color: "warning",
+        icon: <InfoOutlinedIcon sx={{ fontSize: "16px", mr: 0.5 }} />,
+        label: "Medium Risk",
+        tooltip: "This transaction has some potentially risky characteristics",
+        gradient: "linear-gradient(135deg, #ffb74d, #fb8c00)",
+      },
+      Low: {
+        color: "success",
+        icon: <CheckCircleOutlineIcon sx={{ fontSize: "16px", mr: 0.5 }} />,
+        label: "Low Risk",
+        tooltip: "This transaction appears normal",
+        gradient: "linear-gradient(135deg, #66bb6a, #43a047)",
+      },
     };
 
-    const icons = {
-      High: <WarningAmberIcon sx={{ fontSize: "16px", mr: 0.5 }} />,
-      Medium: <InfoOutlinedIcon sx={{ fontSize: "16px", mr: 0.5 }} />,
-      Low: <CheckCircleOutlineIcon sx={{ fontSize: "16px", mr: 0.5 }} />,
-    };
+    const config = riskConfig[riskLevel] || riskConfig.Low;
 
     return (
-      <Tooltip title={`Risk Level: ${riskLevel}`} arrow>
-        <VuiBadge
-          variant="contained"
-          color={colors[riskLevel]}
-          badgeContent={
-            <Box display="flex" alignItems="center">
-              {icons[riskLevel]}
-              {riskLevel} Risk
-            </Box>
-          }
-          container
-        />
+      <Tooltip
+        title={`${config.tooltip} | Risk Score: ${riskScore}/100`}
+        arrow
+        componentsProps={{
+          tooltip: {
+            sx: {
+              bgcolor: "#1a1a2e",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+            },
+          },
+        }}
+      >
+        <Box
+          sx={{
+            background: config.gradient,
+            borderRadius: "12px",
+            padding: "4px 12px",
+            display: "inline-flex",
+            alignItems: "center",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+            transition: "transform 0.2s, box-shadow 0.2s",
+            "&:hover": {
+              transform: "translateY(-1px)",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+            },
+          }}
+        >
+          {config.icon}
+          <VuiTypography
+            variant="caption"
+            sx={{
+              color: "white",
+              fontWeight: "bold",
+              textShadow: "0 1px 2px rgba(0,0,0,0.2)",
+            }}
+          >
+            {config.label}
+          </VuiTypography>
+        </Box>
       </Tooltip>
     );
   };
@@ -272,9 +336,183 @@ const Transactions = () => {
     );
   };
 
-  const handleGenerateTaxReport = () => {
-    setShowPremiumAlert(true);
-    setTimeout(() => setShowPremiumAlert(false), 5000);
+  // Fetch fraud predictions for the first page of transactions
+
+  const handleLowConfidence = (tx) => {
+    // You can:
+    // 1. Flag for manual review
+    // 2. Show a modal with details
+    // 3. Send for additional analysis
+    console.log(`Low confidence prediction for TX ${tx.hash}, needs manual review`);
+    setSelectedTx(tx);
+    setOpenModal(true);
+  };
+  const fetchFraudPredictions = async (txs) => {
+    try {
+      const response = await fetch("https://classifiersserver.onrender.com/fraud_predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address: "0xE11D08e4EA85dc79d63020d99f02f659B17F36DB",
+          transactions: txs.map((tx) => ({
+            blockNumber: tx.blockNumber,
+            blockHash: tx.blockHash,
+            timeStamp: tx.timeStamp,
+            hash: tx.hash,
+            nonce: tx.nonce,
+            transactionIndex: tx.transactionIndex,
+            from: tx.from,
+            to: tx.to,
+            value: tx.value,
+            gas: tx.gas,
+            gasPrice: tx.gasPrice,
+            input: tx.input,
+            methodId: tx.methodId,
+            functionName: tx.functionName,
+            contractAddress: tx.contractAddress,
+            cumulativeGasUsed: tx.cumulativeGasUsed,
+            txreceipt_status: tx.txreceipt_status,
+            gasUsed: tx.gasUsed,
+            confirmations: tx.confirmations,
+            isError: tx.isError,
+          })),
+        }),
+      });
+
+      const data = await response.json();
+      const predictions = {};
+      data.results.forEach((result) => {
+        predictions[result.tx_hash] = {
+          prediction: result.prediction,
+          probability: result.probability_class_0,
+          label: result.label,
+        };
+      });
+      setFraudPredictions(predictions);
+    } catch (error) {
+      console.error("Error fetching fraud predictions:", error);
+    }
+  };
+
+  const getFraudBadge = (txHash) => {
+    const prediction = fraudPredictions[txHash];
+
+    if (!prediction) {
+      return <VuiBadge variant="contained" color="secondary" badgeContent="Loading..." container />;
+    }
+
+    if (prediction === "error") {
+      return <VuiBadge variant="contained" color="warning" badgeContent="Error" container />;
+    }
+
+    const confidence = prediction.probability;
+    const isFraud = prediction.prediction === 1;
+
+    // Handle low confidence cases
+    if (confidence < CONFIDENCE_THRESHOLDS.LOW_CONFIDENCE) {
+      return (
+        <Tooltip title={`Low confidence (${(confidence * 100).toFixed(1)}%) - Needs review`} arrow>
+          <VuiBadge
+            variant="contained"
+            color="warning"
+            badgeContent={
+              <Box display="flex" alignItems="center">
+                <HelpOutlineIcon sx={{ fontSize: "16px", mr: 0.5 }} />
+                Review Needed
+              </Box>
+            }
+            container
+          />
+        </Tooltip>
+      );
+    }
+
+    // Handle medium confidence
+    if (confidence < CONFIDENCE_THRESHOLDS.HIGH_CONFIDENCE) {
+      return (
+        <Tooltip title={`Medium confidence (${(confidence * 100).toFixed(1)}%)`} arrow>
+          <VuiBadge
+            variant="contained"
+            color={isFraud ? "warning" : "info"}
+            badgeContent={
+              <Box display="flex" alignItems="center">
+                {isFraud ? (
+                  <WarningAmberIcon sx={{ fontSize: "16px", mr: 0.5 }} />
+                ) : (
+                  <InfoOutlinedIcon sx={{ fontSize: "16px", mr: 0.5 }} />
+                )}
+                {isFraud ? "Potential Fraud" : "Likely Safe"}
+              </Box>
+            }
+            container
+          />
+        </Tooltip>
+      );
+    }
+
+    // High confidence cases
+    return (
+      <Tooltip title={`High confidence (${(confidence * 100).toFixed(1)}%)`} arrow>
+        <VuiBadge
+          variant="contained"
+          color={isFraud ? "error" : "success"}
+          badgeContent={
+            <Box display="flex" alignItems="center">
+              {isFraud ? (
+                <WarningAmberIcon sx={{ fontSize: "16px", mr: 0.5 }} />
+              ) : (
+                <CheckCircleOutlineIcon sx={{ fontSize: "16px", mr: 0.5 }} />
+              )}
+              {isFraud ? "Fraudulent" : "Legitimate"}
+            </Box>
+          }
+          container
+        />
+      </Tooltip>
+    );
+  };
+
+  // Handle tax report generation
+  const handleGenerateTaxReport = async () => {
+    try {
+      setShowPremiumAlert(false);
+
+      // Show loading state
+      const loadingAlert = (
+        <Alert
+          severity="info"
+          icon={<CircularProgress size={24} sx={{ color: "#4fc3f7" }} />}
+          sx={{
+            mt: 2,
+            backgroundColor: "rgba(187, 134, 252, 0.1)",
+            color: "#bb86fc",
+            border: "1px solid #bb86fc",
+          }}
+        >
+          Generating comprehensive tax report...
+        </Alert>
+      );
+
+      setShowPremiumAlert(loadingAlert);
+
+      // Generate the PDF (this might take a few seconds)
+      await generatePDFReport();
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      setShowPremiumAlert(
+        <Alert
+          severity="error"
+          sx={{
+            mt: 2,
+            backgroundColor: "rgba(239, 154, 154, 0.1)",
+            color: "#ef9a9a",
+            border: "1px solid #ef9a9a",
+          }}
+        >
+          Error generating report: {error.message}
+        </Alert>
+      );
+    }
   };
 
   const handleExplainClick = async (tx) => {
@@ -305,6 +543,400 @@ const Transactions = () => {
   };
 
   const paginatedTransactions = transactions.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
+  const generatePDFReport = async () => {
+  setShowPremiumAlert(false);
+
+  // Create a new PDF document
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  // Add title page
+  doc.setFontSize(24);
+  doc.setTextColor(40, 53, 147);
+  doc.text("Transaction Tax Report", 105, 30, { align: "center" });
+
+  doc.setFontSize(14);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Generated on ${new Date().toLocaleDateString()}`, 105, 40, { align: "center" });
+
+  doc.setFontSize(12);
+  doc.text("Address: 0xE11D08e4EA85dc79d63020d99f02f659B17F36DB", 105, 50, { align: "center" });
+
+  // Add a new page for the summary
+  doc.addPage();
+  doc.setFontSize(18);
+  doc.setTextColor(40, 53, 147);
+  doc.text("Transaction Summary", 20, 20);
+
+  // Summary table
+  const summaryStats = calculateSummaryStatistics();
+  autoTable(doc, {
+    startY: 30,
+    head: [["Metric", "Value"]],
+    body: [
+      ["Total Transactions", summaryStats.totalTransactions],
+      ["Successful Transactions", summaryStats.successfulTransactions],
+      ["Failed Transactions", summaryStats.failedTransactions],
+      ["Total ETH Volume", `${summaryStats.totalVolumeETH} ETH`],
+      ["Total Gas Fees", `${summaryStats.totalGasFeesETH} ETH`],
+      ["Average Transaction Value", `${summaryStats.avgTxValueETH} ETH`],
+      ["High Risk Transactions", summaryStats.highRiskCount],
+      ["Potential Fraud", summaryStats.potentialFraudCount],
+    ],
+    theme: "grid",
+    headStyles: {
+      fillColor: [40, 53, 147],
+      textColor: 255,
+    },
+  });
+
+  // Create a chart for transaction types
+  const chartData = {
+    labels: ['ETH Transfer', 'Token Transfer', 'DeFi', 'NFT', 'Contract', 'High Fee'],
+    datasets: [{
+      label: 'Transaction Types Distribution',
+      data: calculateTransactionTypeDistribution(),
+      backgroundColor: [
+        'rgba(75, 192, 192, 0.6)',
+        'rgba(54, 162, 235, 0.6)',
+        'rgba(153, 102, 255, 0.6)',
+        'rgba(255, 159, 64, 0.6)',
+        'rgba(255, 99, 132, 0.6)',
+        'rgba(255, 206, 86, 0.6)'
+      ],
+      borderColor: [
+        'rgba(75, 192, 192, 1)',
+        'rgba(54, 162, 235, 1)',
+        'rgba(153, 102, 255, 1)',
+        'rgba(255, 159, 64, 1)',
+        'rgba(255, 99, 132, 1)',
+        'rgba(255, 206, 86, 1)'
+      ],
+      borderWidth: 1
+    }]
+  };
+
+  // Create a temporary canvas element for the chart
+  const canvas = document.createElement('canvas');
+  canvas.width = 600;
+  canvas.height = 400;
+  const ctx = canvas.getContext('2d');
+  
+  // Create the chart
+  new Chart(ctx, {
+    type: 'bar',
+    data: chartData,
+    options: {
+      responsive: false,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'Transaction Types Distribution'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // Convert chart to image
+  const chartImage = canvas.toDataURL('image/png');
+
+  // Add chart page
+  doc.addPage();
+  doc.setFontSize(18);
+  doc.setTextColor(40, 53, 147);
+  doc.text("Transaction Types Distribution", 20, 20);
+  doc.addImage(chartImage, 'PNG', 20, 30, 170, 100); // Adjust size and position as needed
+
+  // Add tax estimation page
+  doc.addPage();
+  doc.setFontSize(18);
+  doc.setTextColor(40, 53, 147);
+  doc.text("Tax Liability Estimation", 20, 20);
+
+  const taxEstimation = estimateTaxLiabilities();
+  autoTable(doc, {
+    startY: 30,
+    head: [["Tax Category", "ETH Amount", "USD Value"]],
+    body: [
+      ["Capital Gains", taxEstimation.capitalGainsETH, `$${taxEstimation.capitalGainsUSD}`],
+      ["Income", taxEstimation.incomeETH, `$${taxEstimation.incomeUSD}`],
+      ["Total Estimated Liability", taxEstimation.totalETH, `$${taxEstimation.totalUSD}`],
+      ["Potentially Deductible Fees", taxEstimation.gasFeesETH, `$${taxEstimation.gasFeesUSD}`],
+    ],
+    theme: "grid",
+    headStyles: {
+      fillColor: [40, 53, 147],
+      textColor: 255,
+    },
+  });
+
+  // Add transaction details page
+  doc.addPage();
+  doc.setFontSize(18);
+  doc.setTextColor(40, 53, 147);
+  doc.text("Transaction Details", 20, 20);
+
+  // Prepare transaction data for the table
+  const txData = paginatedTransactions.map((tx) => [
+    new Date(tx.timeStamp * 1000).toLocaleDateString(),
+    formatAddress(tx.hash),
+    formatAddress(tx.from),
+    formatAddress(tx.to || "Contract Creation"),
+    `${(parseInt(tx.value) / 1e18)} ETH`,
+    txTypes[tx.hash]?.type || "Unknown",
+    tx.isError === "0" ? "Success" : "Failed",
+    tx.riskLevel,
+    fraudPredictions[tx.hash]?.label || "Unknown",
+    `${calculateTxFee(tx).toFixed(6)} ETH`,
+  ]);
+
+  autoTable(doc, {
+    startY: 30,
+    head: [
+      [
+        "Date",
+        "Txn Hash",
+        "From",
+        "To",
+        "Value",
+        "Type",
+        "Status",
+        "Risk",
+        "Fraud",
+        "Tx Fee",
+      ],
+    ],
+    body: txData,
+    theme: "grid",
+    headStyles: {
+      fillColor: [40, 53, 147],
+      textColor: 255,
+    },
+    styles: {
+      fontSize: 7,
+      cellWidth: "wrap",
+    },
+    columnStyles: {
+      0: { cellWidth: 20 },
+      1: { cellWidth: 25 },
+      2: { cellWidth: 25 },
+      3: { cellWidth: 25 },
+      4: { cellWidth: 20 },
+      5: { cellWidth: 20 },
+      6: { cellWidth: 15 },
+      7: { cellWidth: 15 },
+      8: { cellWidth: 15 },
+      9: { cellWidth: 15 },
+    },
+    margin: { top: 30 },
+  });
+
+  // Add disclaimer page
+  doc.addPage();
+  doc.setFontSize(16);
+  doc.setTextColor(40, 53, 147);
+  doc.text("Important Disclaimers", 20, 20);
+
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  const disclaimerText = [
+    "This report is provided for informational purposes only and does not constitute tax advice.",
+    "The tax estimations are based on simplified calculations and may not reflect your actual tax liability.",
+    "Cryptocurrency tax laws vary by jurisdiction and are subject to change.",
+    "You should consult with a qualified tax professional for advice specific to your situation.",
+    "The transaction risk assessments are based on heuristics and machine learning models that may not be 100% accurate.",
+  ];
+
+  let yPosition = 30;
+  disclaimerText.forEach((text) => {
+    doc.text(text, 20, yPosition, { maxWidth: 170 });
+    yPosition += 10;
+  });
+
+  // Save the PDF
+  doc.save(`Transaction_Tax_Report_${new Date().toISOString().split("T")[0]}.pdf`);
+};
+
+// Add this helper function to calculate transaction type distribution
+const calculateTransactionTypeDistribution = () => {
+  const typeCounts = {
+    'ETH Transfer': 0,
+    'Token Transfer': 0,
+    'DeFi': 0,
+    'NFT': 0,
+    'Contract': 0,
+    'High Fee': 0
+  };
+
+  transactions.forEach(tx => {
+    const type = txTypes[tx.hash]?.type;
+    switch(type) {
+      case '0': typeCounts['ETH Transfer']++; break;
+      case '1': typeCounts['Token Transfer']++; break;
+      case '2': typeCounts['DeFi']++; break;
+      case '3': typeCounts['NFT']++; break;
+      case '4': typeCounts['Contract']++; break;
+      case '5': typeCounts['High Fee']++; break;
+      default: break;
+    }
+  });
+
+  return [
+    typeCounts['ETH Transfer'],
+    typeCounts['Token Transfer'],
+    typeCounts['DeFi'],
+    typeCounts['NFT'],
+    typeCounts['Contract'],
+    typeCounts['High Fee']
+  ];
+};
+
+  const calculateSummaryStatistics = () => {
+    const totalTransactions = transactions.length;
+    const successfulTransactions = transactions.filter((tx) => tx.isError === "0").length;
+    const failedTransactions = totalTransactions - successfulTransactions;
+
+    const totalVolumeETH = transactions
+      .reduce((sum, tx) => sum + parseInt(tx.value) / 1e18, 0)
+      .toFixed(4);
+
+    const totalGasFeesETH = transactions
+      .reduce((sum, tx) => sum + calculateTxFee(tx), 0)
+      .toFixed(6);
+
+    const avgTxValueETH = (parseFloat(totalVolumeETH) / totalTransactions).toFixed(6);
+
+    const highRiskCount = transactions.filter((tx) => tx.riskLevel === "High").length;
+
+    const potentialFraudCount = Object.values(fraudPredictions).filter(
+      (pred) => pred.prediction === 1 && pred.probability > CONFIDENCE_THRESHOLDS.MEDIUM_CONFIDENCE
+    ).length;
+
+    return {
+      totalTransactions,
+      successfulTransactions,
+      failedTransactions,
+      totalVolumeETH,
+      totalGasFeesETH,
+      avgTxValueETH,
+      highRiskCount,
+      potentialFraudCount,
+    };
+  };
+
+  const estimateTaxLiabilities = () => {
+    // Simplified tax estimation (in a real app, this would be more sophisticated)
+    const ethPrice = 2000; // Example ETH price in USD - in a real app, fetch this
+
+    // Calculate total received ETH (simplified)
+    const receivedETH = paginatedTransactions
+      .filter((tx) => tx.isError === "0")
+      .reduce((sum, tx) => sum + parseInt(tx.value) / 1e18, 0);
+
+    // Calculate total sent ETH (simplified)
+    const sentETH = 0; // In a real app, you'd need to track outgoing transactions
+
+    // Simplified capital gains calculation
+    const capitalGainsETH = (receivedETH * 0.15).toFixed(6); // 15% of received
+    const capitalGainsUSD = (capitalGainsETH * ethPrice).toFixed(2);
+
+    // Simplified income calculation (e.g., for mining rewards, etc.)
+    const incomeETH = (receivedETH * 0.05).toFixed(6); // 5% as income
+    const incomeUSD = (incomeETH * ethPrice).toFixed(2);
+
+    // Gas fees (potentially deductible)
+    const gasFeesETH = paginatedTransactions
+      .reduce((sum, tx) => sum + calculateTxFee(tx), 0)
+      .toFixed(6);
+    const gasFeesUSD = (gasFeesETH * ethPrice).toFixed(2);
+
+    const totalETH = (parseFloat(capitalGainsETH) + parseFloat(incomeETH)).toFixed(6);
+    const totalUSD = (parseFloat(capitalGainsUSD) + parseFloat(incomeUSD)).toFixed(2);
+
+    return {
+      capitalGainsETH,
+      capitalGainsUSD,
+      incomeETH,
+      incomeUSD,
+      gasFeesETH,
+      gasFeesUSD,
+      totalETH,
+      totalUSD,
+    };
+  };
+
+  const generateSimpleAnalysis = (tx) => {
+    const valueETH = parseInt(tx.value) / 1e18;
+    const feeETH = calculateTxFee(tx);
+    const feePercentage = (feeETH / valueETH) * 100;
+
+    let analysis = "";
+
+    // Value analysis
+    if (valueETH > 1) {
+      analysis += `This was a high-value transaction (${valueETH.toFixed(4)} ETH). `;
+    } else if (valueETH < 0.01) {
+      analysis += `This was a low-value transaction (${valueETH.toFixed(6)} ETH). `;
+    }
+
+    // Fee analysis
+    if (feePercentage > 10) {
+      analysis += `The transaction fee was unusually high (${feePercentage.toFixed(
+        2
+      )}% of the transaction value). `;
+    }
+
+    // Risk analysis
+    if (tx.riskLevel === "High") {
+      analysis += "This transaction has multiple high-risk characteristics. ";
+    } else if (tx.riskLevel === "Medium") {
+      analysis += "This transaction shows some potentially risky patterns. ";
+    }
+
+    // Fraud prediction
+    const fraudPred = fraudPredictions[tx.hash];
+    if (
+      fraudPred?.prediction === 1 &&
+      fraudPred.probability > CONFIDENCE_THRESHOLDS.MEDIUM_CONFIDENCE
+    ) {
+      analysis += "Our system detected potential fraudulent activity in this transaction. ";
+    }
+
+    // Status analysis
+    if (tx.isError !== "0") {
+      analysis += "This transaction failed to execute on the blockchain. ";
+    }
+
+    // Protocol analysis
+    const protocol = protocol_mappings[tx.to?.toLowerCase()];
+    if (protocol) {
+      analysis += `This transaction interacted with ${protocol}. `;
+    }
+
+    // Tax implications
+    if (valueETH > 0.1) {
+      analysis += "This transaction may have significant tax implications. ";
+    }
+
+    if (analysis === "") {
+      analysis =
+        "This transaction appears to be a standard transfer with no unusual characteristics.";
+    }
+
+    return analysis;
+  };
 
   return (
     <VuiBox
@@ -352,6 +984,7 @@ const Transactions = () => {
               { name: "Type", align: "center" },
               { name: "Status", align: "center" },
               { name: "Risk", align: "center" },
+              { name: "Fraud", align: "center" },
               { name: "Tx Fee", align: "center" },
               { name: "Date", align: "center" },
               { name: "Actions", align: "center" },
@@ -385,7 +1018,8 @@ const Transactions = () => {
               ),
               Type: getTypeBadge(tx.hash),
               Status: getStatusBadge(tx),
-              Risk: getSuspiciousBadge(tx.isSuspicious, tx.riskLevel),
+              Risk: getSuspiciousBadge(tx.isSuspicious, tx.riskLevel, calculateRiskScore(tx), tx),
+              Fraud: getFraudBadge(tx.hash),
               Date: (
                 <VuiTypography variant="caption" color="white" fontWeight="medium">
                   {new Date(tx.timeStamp * 1000).toLocaleString()}
@@ -398,21 +1032,27 @@ const Transactions = () => {
               ),
 
               Actions: (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => handleExplainClick(tx)}
-                  sx={{
-                    color: "#61dafb",
-                    borderColor: "#61dafb",
-                    "&:hover": {
-                      backgroundColor: "rgba(97, 218, 251, 0.1)",
-                      borderColor: "#4fc3f7",
-                    },
-                  }}
-                >
-                  Explain
-                </Button>
+                <>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => handleExplainClick(tx)}
+                    sx={{ mr: 1 /* ... existing styles */ }}
+                  >
+                    Explain
+                  </Button>
+                  {/* {fraudPredictions[tx.hash]?.probability <
+                    CONFIDENCE_THRESHOLDS.LOW_CONFIDENCE && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleLowConfidence(tx)}
+                      sx={{ color: "#ff9800", borderColor: "#ff9800" }}
+                    >
+                      Review
+                    </Button>
+                  )} */}
+                </>
               ),
             }))}
           />
